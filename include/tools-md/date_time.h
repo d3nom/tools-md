@@ -40,5 +40,24 @@ inline int timeval_to_ms(const struct timeval& tv){
     return std::floor(tv.tv_usec / 1000) + (tv.tv_sec * 1000);
 }
 
+class stopwatch
+{
+    typedef std::chrono::high_resolution_clock _hrc;
+    typedef std::chrono::duration<double, std::ratio<1>> _sec;
+public:
+    stopwatch() : _s(_hrc::now()) {}
+    void reset() { _s = _hrc::now(); }
+    double elapsed() const
+    {
+        return std::chrono::duration_cast<_sec>(
+            _hrc::now() - _s
+        ).count();
+    }
+
+private:
+    std::chrono::time_point<_hrc> _s;
+};
+
+
 }}//::md::date
 #endif //_tools_md_date_time_h

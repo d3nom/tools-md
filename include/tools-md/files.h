@@ -43,7 +43,7 @@ namespace md{ namespace files{
 
 
 /* Write "n" bytes to a descriptor. */
-ssize_t writen(int fd, const void *vptr, size_t n)
+inline ssize_t writen(int fd, const void *vptr, size_t n)
 {
     size_t nleft;
     ssize_t nwritten;
@@ -237,7 +237,7 @@ void gzip_file(
 }
 */
 
-void gzip_file(
+inline void gzip_file(
     md::string_view src, md::string_view dest)
 {
     z_stream zs;

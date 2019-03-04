@@ -46,7 +46,7 @@ template<typename T>
 using async_item_cb = typename std::function<void(const T& val, async_cb)>;
 typedef std::function<void(async_cb)> async_series_cb;
 
-void noop_cb(const cb_error& err)
+inline void noop_cb(const cb_error& err)
 {
     if(err)
         md::log::default_logger()->error(

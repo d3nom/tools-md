@@ -53,7 +53,7 @@ enum class log_level
     trace
 };
 
-md::string_view to_string(log_level lvl)
+inline md::string_view to_string(log_level lvl)
 {
     switch(lvl){
         case log_level::audit_failed: return "AUDIT-FAILED";
@@ -688,7 +688,7 @@ namespace _internal{
 
 } // ns: md::_internal
 
-md::log::sp_logger& default_logger()
+inline md::log::sp_logger& default_logger()
 {
     static auto out_snk = std::make_shared<md::log::sinks::console_sink>(
         true

@@ -99,5 +99,18 @@ struct select_last<T, Args...>
 };
 
 
+
+template< typename T>
+constexpr const T& get_last(const T& v) noexcept
+{
+    return v;
+}
+template< typename T, typename... PARAMS>
+constexpr const typename select_last<T, PARAMS...>::type&
+get_last(const T& /*v*/, const PARAMS&... args) noexcept
+{
+    return get_last(args...);
+}
+
 }//::md
 #endif //_tools_md_traits_h

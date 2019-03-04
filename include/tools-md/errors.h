@@ -22,6 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifndef _tools_md_errors_h
+#define _tools_md_errors_h
+
 #include "stable_headers.h"
 
 #include <stdio.h>
@@ -29,8 +32,6 @@ SOFTWARE.
 #include <execinfo.h>
 #include <cxxabi.h>
 
-#ifndef _tools_md_errors_h
-#define _tools_md_errors_h
 
 namespace md { namespace error{
 
@@ -277,7 +278,7 @@ private:
     std::string _func;
 };
 
-std::ostream& operator<<(std::ostream& s, const cb_error& v)
+inline std::ostream& operator<<(std::ostream& s, const cb_error& v)
 {
     s << std::string(v.c_str());
     return s;

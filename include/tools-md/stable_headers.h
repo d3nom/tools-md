@@ -25,6 +25,11 @@ SOFTWARE.
 #ifndef _tools_md_stable_headers_h
 #define _tools_md_stable_headers_h
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/inotify.h>
+#include <fcntl.h>
 
 #include <memory>
 #include <cmath>
@@ -33,7 +38,7 @@ SOFTWARE.
 #include <sstream>
 #include <iostream>
 #include <fstream>
-
+#include <atomic>
 #include <vector>
 
 #include <strings.h>
@@ -47,12 +52,13 @@ SOFTWARE.
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
-
 #ifdef MD_USE_STD_STRING_VIEW
     #include <string_view>
 #else
     #include <boost/utility/string_view.hpp>
-#endif //EVMVC_USE_STD_STRING_VIEW
+#endif //MD_USE_STD_STRING_VIEW
+
+#include "fmt/format.h"
 
 namespace md{
 namespace bfs = boost::filesystem;
@@ -69,10 +75,10 @@ namespace bfs = boost::filesystem;
     /// The type of basic string view used by the library
     template<class CharT, class Traits>
     using basic_string_view = boost::basic_string_view<CharT, Traits>;
-#endif //EVMVC_USE_STD_STRING_VIEW
+#endif //MD_USE_STD_STRING_VIEW
 }//::md
 
-#ifdef EVMVC_USE_STD_STRING_VIEW
+#ifdef MD_USE_STD_STRING_VIEW
     
 #else
 namespace fmt {
@@ -87,7 +93,7 @@ namespace fmt {
         }
     };
 }
-#endif //EVMVC_USE_STD_STRING_VIEW
+#endif //MD_USE_STD_STRING_VIEW
 
 
 #endif//_tools_md_stable_headers_h

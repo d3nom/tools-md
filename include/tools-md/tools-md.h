@@ -33,6 +33,9 @@ SOFTWARE.
 #include "traits.h"
 #include "callbacks.h"
 #include "text.h"
-
+#include "event_queue.h"
+#include "event_strand.h"
+#include "async.h"
+#include "delegate.h"
 
 #endif //_tools_md_h
