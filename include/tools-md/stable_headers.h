@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include <memory>
 #include <cmath>
-
+#include <numeric>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -43,6 +43,10 @@ SOFTWARE.
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 
+#include <boost/logic/tribool.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
 
 #ifdef MD_USE_STD_STRING_VIEW
     #include <string_view>
@@ -51,6 +55,8 @@ SOFTWARE.
 #endif //EVMVC_USE_STD_STRING_VIEW
 
 namespace md{
+namespace bfs = boost::filesystem;
+    
 #ifdef MD_USE_STD_STRING_VIEW
     /// The type of string view used by the library
     using string_view = std::string_view;

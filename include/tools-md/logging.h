@@ -26,6 +26,9 @@ SOFTWARE.
 #define _tools_md_logging_h
 
 #include "stable_headers.h"
+#include "text.h"
+#include "files.h"
+
 #include "fmt/format.h"
 
 #include <sstream>
@@ -35,6 +38,7 @@ namespace md { namespace log{
 
 class logger;
 typedef std::shared_ptr<logger> sp_logger;
+md::log::sp_logger& default_logger();
 
 enum class log_level
 {
@@ -452,7 +456,7 @@ namespace sinks{
             
             std::string log_str =
                 _gen_header(log_path, lvl) + msg.to_string() + "\n";
-            md::_internal::writen(_fd, log_str.c_str(), log_str.size());
+            md::files::writen(_fd, log_str.c_str(), log_str.size());
         }
         
         void flush() const
@@ -540,7 +544,7 @@ namespace sinks{
                         );
                         
                         try{
-                            md::gzip_file(new_blf, new_blf);
+                            md::files::gzip_file(new_blf, new_blf);
                             /*
                             std::string tmp_log = 
                                 (pp.parent_path()/bfs::unique_path()).string();
@@ -563,8 +567,8 @@ namespace sinks{
                             });
                             */
                         }catch(const std::exception& err){
-                            log::default_logger()->warn(
-                                cb_error(err)
+                            md::log::default_logger()->warn(
+                                md::callback::cb_error(err)
                             );
                         }
                     }
@@ -610,7 +614,7 @@ namespace sinks{
             if(event_add(_wev, &tv) == -1){
                 event_free(_wev);
                 _wev = nullptr;
-                throw EVMVC_ERR("event_add failed!");
+                throw MD_ERR("event_add failed!");
             }
         }
         
@@ -684,13 +688,13 @@ namespace _internal{
 
 } // ns: md::_internal
 
-md::sp_logger& default_logger()
+md::log::sp_logger& default_logger()
 {
     static auto out_snk = std::make_shared<md::log::sinks::console_sink>(
         true
     );
-    static md::sp_logger _default_logger =
-        std::make_shared<md::logger>("/", out_snk);
+    static md::log::sp_logger _default_logger =
+        std::make_shared<md::log::logger>("/", out_snk);
     return _default_logger;
 }
 
