@@ -33,6 +33,9 @@ SOFTWARE.
 
 namespace md { namespace log{
 
+class logger;
+typedef std::shared_ptr<logger> sp_logger;
+
 enum class log_level
 {
     off = 0,

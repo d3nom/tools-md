@@ -222,7 +222,7 @@ public:
         _msg = std::string(err.what());
         
         try{
-            auto se = dynamic_cast<const evmvc::stacked_error&>(err);
+            auto se = dynamic_cast<const md::error::stacked_error&>(err);
             _stack = se.stack();
             _file = se.file().data();
             _line = se.line();
@@ -284,5 +284,18 @@ std::ostream& operator<<(std::ostream& s, const cb_error& v)
 }
 
 }}//::md::error
+namespace fmt {
+    template <>
+    struct formatter<md::callback::cb_error> {
+        template <typename ParseContext>
+        constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
+        
+        template <typename FormatContext>
+        auto format(const md::callback::cb_error& e, FormatContext& ctx) {
+            return format_to(ctx.out(), "{}", e.c_str());
+        }
+    };
+}
+
 
 #endif //_tools_md_errors_h

@@ -36,6 +36,8 @@ SOFTWARE.
 
 #include <vector>
 
+#include <strings.h>
+
 #include <event2/event.h>
 #include <event2/util.h>
 #include <event2/buffer.h>
