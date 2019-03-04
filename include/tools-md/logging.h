@@ -71,7 +71,7 @@ namespace sinks{
     {
     public:
         logger_sink(log_level lvl)
-            : _lvl(lvl), _flush_on_lvl(md::log_level::warning)
+            : _lvl(lvl), _flush_on_lvl(md::log::log_level::warning)
         {
         }
         
@@ -105,7 +105,7 @@ namespace sinks{
         log_level _lvl;
         log_level _flush_on_lvl;
     };
-} // ns: md::sinks
+} // ns: md::log::sinks
 
 namespace _internal{
     
@@ -134,7 +134,7 @@ public:
     {
     }
 
-    logger(md::string_view path, md::sinks::sp_logger_sink snk,
+    logger(md::string_view path, md::log::sinks::sp_logger_sink snk,
         log_level lvl = log_level::info)
         : sinks::logger_sink(lvl), _parent(), _path(path.data()),
         _sinks{snk}
@@ -171,12 +171,12 @@ public:
         return sp_logger(new logger(p, np.c_str()));
     }
     
-    void register_sink(md::sinks::sp_logger_sink sink)
+    void register_sink(md::log::sinks::sp_logger_sink sink)
     {
         _sinks.emplace_back(sink);
     }
     
-    void replace_sink(md::sinks::sp_logger_sink sink)
+    void replace_sink(md::log::sinks::sp_logger_sink sink)
     {
         _sinks.clear();
         if(_parent)
@@ -202,7 +202,7 @@ public:
     void log(
         md::string_view log_path,
         log_level lvl,
-        md::cb_error err) const
+        md::callback::cb_error err) const
     {
         std::string log_val = err.c_str();
         if(err.has_stack())
@@ -228,7 +228,7 @@ public:
         if(should_log(log_level::trace))
             log(_path, log_level::trace, fmt::format(f.data(), args...));
     }
-    void trace(md::cb_error err)
+    void trace(md::callback::cb_error err)
     {
         if(should_log(log_level::trace))
             log(_path, log_level::trace, err);
@@ -240,7 +240,7 @@ public:
         if(should_log(log_level::debug))
             log(_path, log_level::debug, fmt::format(f.data(), args...));
     }
-    void debug(md::cb_error err)
+    void debug(md::callback::cb_error err)
     {
         if(should_log(log_level::debug))
             log(_path, log_level::debug, err);
@@ -252,7 +252,7 @@ public:
         if(should_log(log_level::info))
             log(_path, log_level::info, fmt::format(f.data(), args...));
     }
-    void info(md::cb_error err)
+    void info(md::callback::cb_error err)
     {
         if(should_log(log_level::info))
             log(_path, log_level::info, err);
@@ -264,7 +264,7 @@ public:
         if(should_log(log_level::warning))
             log(_path, log_level::warning, fmt::format(f.data(), args...));
     }
-    void warn(md::cb_error err)
+    void warn(md::callback::cb_error err)
     {
         if(should_log(log_level::warning))
             log(_path, log_level::warning, err);
@@ -276,7 +276,7 @@ public:
         if(should_log(log_level::error))
             log(_path, log_level::error, fmt::format(f.data(), args...));
     }
-    void error(md::cb_error err)
+    void error(md::callback::cb_error err)
     {
         if(should_log(log_level::error))
             log(_path, log_level::error, err);
@@ -290,7 +290,7 @@ public:
         
         std::exit(-1);
     }
-    void fatal(md::cb_error err)
+    void fatal(md::callback::cb_error err)
     {
         if(should_log(log_level::fatal))
             log(_path, log_level::fatal, err);
@@ -305,7 +305,7 @@ public:
                 fmt::format(f.data(), args...)
             );
     }
-    void success(md::cb_error err)
+    void success(md::callback::cb_error err)
     {
         if(should_log(log_level::audit_succeeded))
             log(_path, log_level::audit_succeeded, err);
@@ -317,7 +317,7 @@ public:
         if(should_log(log_level::audit_failed))
             log(_path, log_level::audit_failed, fmt::format(f.data(), args...));
     }
-    void fail(md::cb_error err)
+    void fail(md::callback::cb_error err)
     {
         if(should_log(log_level::audit_failed))
             log(_path, log_level::audit_failed, err);
@@ -545,7 +545,7 @@ namespace sinks{
                             md::gzip_file(
                                 this->_ev_base,
                                 new_blf, tmp_log,
-                            [new_blf, tmp_log](md::cb_error err){
+                            [new_blf, tmp_log](md::callback::cb_error err){
                                 if(err){
                                     bfs::remove(tmp_log);
                                     bfs::remove(new_blf);
@@ -646,7 +646,7 @@ namespace sinks{
         bool _rotating;
     };
     
-} // ns: md::sinks
+} // ns: md::log::sinks
 
 namespace _internal{
     
@@ -683,7 +683,7 @@ namespace _internal{
 
 md::sp_logger& default_logger()
 {
-    static auto out_snk = std::make_shared<md::sinks::console_sink>(
+    static auto out_snk = std::make_shared<md::log::sinks::console_sink>(
         true
     );
     static md::sp_logger _default_logger =

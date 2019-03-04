@@ -41,3 +41,6 @@ configure_file (
     "${CMAKE_CURRENT_SOURCE_DIR}/md_config.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/tools-md/md_config.h"
 )
+
+file(GLOB MD_HEADERS "${PROJECT_SOURCE_DIR}/include/tools-md/*.h")
+source_group("Headers" FILES ${MD_HEADERS})

@@ -30,7 +30,7 @@ SOFTWARE.
 #include "traits.h"
 #include "logging.h"
 
-namespace md{ namespace callbacks{
+namespace md{ namespace callback{
 
 class cb_error
 {
