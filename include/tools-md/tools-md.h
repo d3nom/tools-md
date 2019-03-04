@@ -32,7 +32,7 @@ SOFTWARE.
 #include "date_time.h"
 #include "traits.h"
 #include "callbacks.h"
-
+#include "text.h"
 
 
 #endif //_tools_md_h
