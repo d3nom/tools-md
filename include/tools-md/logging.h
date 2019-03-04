@@ -26,6 +26,7 @@ SOFTWARE.
 #define _tools_md_logging_h
 
 #include "stable_headers.h"
+#include "fmt/format.h"
 
 #include <sstream>
 #include <iomanip>
