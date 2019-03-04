@@ -48,7 +48,7 @@ SOFTWARE.
     #include <string_view>
 #else
     #include <boost/utility/string_view.hpp>
-#endif
+#endif //EVMVC_USE_STD_STRING_VIEW
 
 namespace md{
 #ifdef MD_USE_STD_STRING_VIEW
@@ -63,7 +63,25 @@ namespace md{
     /// The type of basic string view used by the library
     template<class CharT, class Traits>
     using basic_string_view = boost::basic_string_view<CharT, Traits>;
-#endif
+#endif //EVMVC_USE_STD_STRING_VIEW
 }//::md
+
+#ifdef EVMVC_USE_STD_STRING_VIEW
+    
+#else
+namespace fmt {
+    template <>
+    struct formatter<md::string_view> {
+        template <typename ParseContext>
+        constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+        
+        template <typename FormatContext>
+        auto format(const md::string_view &s, FormatContext &ctx) {
+            return format_to(ctx.out(), "{}", s.data());
+        }
+    };
+}
+#endif //EVMVC_USE_STD_STRING_VIEW
+
 
 #endif//_tools_md_stable_headers_h
