@@ -25,10 +25,19 @@ SOFTWARE.
 #ifndef _tools_md_stable_headers_h
 #define _tools_md_stable_headers_h
 
+
+#include <memory>
 #include <cmath>
 
+#include <iostream>
+#include <fstream>
 
 #include <vector>
+
+#include <event2/event.h>
+#include <event2/util.h>
+#include <event2/buffer.h>
+#include <event2/bufferevent.h>
 
 
 #ifdef MD_USE_STD_STRING_VIEW
@@ -52,8 +61,5 @@ namespace md{
     using basic_string_view = boost::basic_string_view<CharT, Traits>;
 #endif
 }//::md
-
-class logger;
-typedef std::shared_ptr<logger> sp_logger;
 
 #endif//_tools_md_stable_headers_h

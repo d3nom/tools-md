@@ -31,7 +31,7 @@ SOFTWARE.
 #include <sstream>
 #include <iomanip>
 
-namespace md {
+namespace md { namespace log{
 
 enum class log_level
 {
@@ -560,7 +560,7 @@ namespace sinks{
                             });
                             */
                         }catch(const std::exception& err){
-                            _internal::default_logger()->warn(
+                            log::default_logger()->warn(
                                 cb_error(err)
                             );
                         }
@@ -679,23 +679,24 @@ namespace _internal{
         );
     }
 
-    md::sp_logger& default_logger()
-    {
-        static auto out_snk = std::make_shared<md::sinks::console_sink>(
-            true
-        );
-        static md::sp_logger _default_logger =
-            std::make_shared<md::logger>("/", out_snk);
-        return _default_logger;
-    }
-
 } // ns: md::_internal
+
+md::sp_logger& default_logger()
+{
+    static auto out_snk = std::make_shared<md::sinks::console_sink>(
+        true
+    );
+    static md::sp_logger _default_logger =
+        std::make_shared<md::logger>("/", out_snk);
+    return _default_logger;
+}
+
 
 template <typename... Args>
 void trace(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::trace))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::trace))
+        log::default_logger()->log(
             "/", log_level::trace, fmt::format(f.data(), args...)
         );
 }
@@ -703,8 +704,8 @@ void trace(md::string_view f, const Args&... args)
 template <typename... Args>
 void debug(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::debug))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::debug))
+        log::default_logger()->log(
             "/", log_level::debug, fmt::format(f.data(), args...)
         );
 }
@@ -712,8 +713,8 @@ void debug(md::string_view f, const Args&... args)
 template <typename... Args>
 void info(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::info))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::info))
+        log::default_logger()->log(
             "/", log_level::info, fmt::format(f.data(), args...)
         );
 }
@@ -721,8 +722,8 @@ void info(md::string_view f, const Args&... args)
 template <typename... Args>
 void warn(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::warning))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::warning))
+        log::default_logger()->log(
             "/", log_level::warning, fmt::format(f.data(), args...)
         );
 }
@@ -730,8 +731,8 @@ void warn(md::string_view f, const Args&... args)
 template <typename... Args>
 void error(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::error))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::error))
+        log::default_logger()->log(
             "/", log_level::error, fmt::format(f.data(), args...)
         );
 }
@@ -739,8 +740,8 @@ void error(md::string_view f, const Args&... args)
 template <typename... Args>
 void fatal(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::fatal))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::fatal))
+        log::default_logger()->log(
             "/", log_level::fatal, fmt::format(f.data(), args...)
         );
     
@@ -750,8 +751,8 @@ void fatal(md::string_view f, const Args&... args)
 template <typename... Args>
 void success(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::audit_succeeded))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::audit_succeeded))
+        log::default_logger()->log(
             "/", log_level::audit_succeeded,
             fmt::format(f.data(), args...)
         );
@@ -760,17 +761,13 @@ void success(md::string_view f, const Args&... args)
 template <typename... Args>
 void fail(md::string_view f, const Args&... args)
 {
-    if(_internal::default_logger()->should_log(log_level::audit_failed))
-        _internal::default_logger()->log(
+    if(log::default_logger()->should_log(log_level::audit_failed))
+        log::default_logger()->log(
             "/", log_level::audit_failed,
             fmt::format(f.data(), args...)
         );
 }
 
 
-
-
-
-
-}//::md
+}}//::md::log
 #endif//_tools_md_logging_h

@@ -27,8 +27,11 @@ SOFTWARE.
 
 #include "stable_headers.h"
 #include "enums.h"
+#include "errors.h"
 #include "logging.h"
 #include "date_time.h"
+#include "traits.h"
+#include "callbacks.h"
 
 
 

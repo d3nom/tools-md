@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include "stable_headers.h"
 
-namespace md{
+namespace md{ namespace date{
 
 inline struct timeval ms_to_timeval(int ms){
     if(ms == 0)
@@ -40,5 +40,5 @@ inline int timeval_to_ms(const struct timeval& tv){
     return std::floor(tv.tv_usec / 1000) + (tv.tv_sec * 1000);
 }
 
-}//::md
+}}//::md::date
 #endif //_tools_md_date_time_h
