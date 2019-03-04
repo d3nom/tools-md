@@ -29,6 +29,8 @@ SOFTWARE.
 #include <memory>
 #include <cmath>
 
+#include <string>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 
