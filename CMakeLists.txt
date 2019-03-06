@@ -3,7 +3,7 @@ cmake_policy(SET CMP0054 NEW)
 project(libtools-md VERSION 0.1.0 LANGUAGES CXX C)
 
 # deps
-if(NOT TARGET date)
+if(NOT TARGET tz)
     subdirs(deps/date)
 endif()
 if(NOT TARGET fmt)
