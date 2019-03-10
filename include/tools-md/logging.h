@@ -42,15 +42,15 @@ md::log::sp_logger& default_logger();
 
 enum class log_level
 {
-    off = 0,
-    audit_failed,
-    audit_succeeded,
-    fatal,
-    error,
-    warning,
-    info,
-    debug,
-    trace
+    off             = 0,
+    audit_failed    = 1,
+    audit_succeeded = 2,
+    fatal           = 3,
+    error           = 4,
+    warning         = 5,
+    info            = 6,
+    debug           = 7,
+    trace           = 8
 };
 
 inline md::string_view to_string(log_level lvl)
