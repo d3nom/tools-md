@@ -41,6 +41,55 @@ class async final
 {
     async(){}
 public:
+    
+    template<
+        typename Iterator,
+        typename T,
+        typename std::enable_if<
+            std::is_invocable_r<
+                void,
+                T,
+                const typename std::iterator_traits<Iterator>::value_type&,
+                std::function<void(const md::callback::cb_error& err)>
+            >::value
+        , int32_t>::type = -1
+    >
+    static void each(
+        Iterator first, Iterator last,
+        T cb,
+        md::callback::async_cb end_cb)
+    {
+        typedef typename std::iterator_traits<Iterator>::value_type U;
+        md::callback::async_item_cb<U> aicb = cb;
+        md::async::each<Iterator,U>(first, last, aicb, end_cb);
+    }
+
+    template<
+        typename Iterator,
+        typename T = typename std::iterator_traits<Iterator>::value_type
+    >
+    static void each(
+        Iterator first, Iterator last,
+        md::callback::async_item_cb<T> cb,
+        md::callback::async_cb end_cb)
+    {
+        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+
+        auto it = first;
+
+        if(it == last){
+            eq->push_back(std::bind(end_cb, nullptr));
+            return;
+        }
+        eq->push_back(
+            std::bind(
+                each_iter<Iterator, T>, 
+                eq, last, it, cb, end_cb
+            )
+        );
+    }
+
+
 
     template<
         typename Iterator,
@@ -94,18 +143,18 @@ public:
     /*!
      * 
      *	example: 
-     *		pq_async::async::series({
-     *			[&](pq_async::async_cb scb) -> void {
-     *				return scb(nullptr);
-     *			},
-     *			[&](pq_async::async_cb scb) -> void {
-     *				return scb(nullptr);
-     *			},
-     *		}, [&](const pq_async::cb_error& err) -> void {
-     *			if(err)
-     *				return cb(err, cfg);
-     *			cb(pq_async::cb_error::no_err, cfg);
-     *		});
+     *      pq_async::async::series({
+     *          [&](pq_async::async_cb scb) -> void {
+     *              return scb(nullptr);
+     *          },
+     *          [&](pq_async::async_cb scb) -> void {
+     *              return scb(nullptr);
+     *          },
+     *      }, [&](const pq_async::cb_error& err) -> void {
+     *          if(err)
+     *              return cb(err, cfg);
+     *          cb(pq_async::cb_error::no_err, cfg);
+     *      });
      */
     static void series(
         std::shared_ptr<event_queue> eq,

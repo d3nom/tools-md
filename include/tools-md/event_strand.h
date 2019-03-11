@@ -54,14 +54,18 @@ class event_strand
     );
     
 public:
-    event_strand(bool auto_requeue = true)
-        : event_task_base(event_queue::get_default()),
-        _auto_requeue(auto_requeue)
+    event_strand(bool auto_requeue = true, bool activate_on_requeue = true)
+        : event_queue(),
+        event_task_base(event_queue::get_default()),
+        _auto_requeue(auto_requeue),
+        _activate_on_requeue(activate_on_requeue)
     {
     }
     
     event_strand(event_queue* owner, bool auto_requeue = true)
-        : event_task_base(owner), _auto_requeue(auto_requeue)
+        : event_queue(),
+        event_task_base(owner),
+        _auto_requeue(auto_requeue)
     {
     }
     
@@ -73,13 +77,29 @@ public:
         }
     }
     
-    virtual bool force_push(){ return true;}
+    event_base* ev_base() const
+    {
+        return this->_owner->_ev_base;
+    }
+    
+    void activate()
+    {
+        this->_owner->activate();
+    }
+    
+    void enable_activate_on_requeue(bool activate_on_requeue)
+    {
+        _activate_on_requeue = activate_on_requeue;
+    }
+    bool activate_on_requeue() const { return _activate_on_requeue;}
+    
+    virtual bool force_push() const { return true;}
     virtual size_t size() const
     {
         return _tasks.size();
     }
     
-    virtual event_requeue_pos requeue()
+    virtual event_requeue_pos requeue() const
     {
         if(_auto_requeue && this->size() > 0)
             return event_requeue_pos::back;
@@ -142,6 +162,7 @@ private:
     #endif
 
     bool _auto_requeue;
+    bool _activate_on_requeue;
     T _data;
 };
 

@@ -56,6 +56,8 @@ inline void event_queue::series(
 inline uint64_t _event_queue_push_back(
     event_queue* eq, sp_event_task tp_task)
 {
+    if(tp_task->activate_on_requeue())
+        eq->activate();
     if(tp_task->owner() != eq)
         throw MD_ERR(
             "Can't requeue a task created on another event_queue!\n"
@@ -84,6 +86,8 @@ inline uint64_t _event_queue_push_back(
 inline uint64_t _event_queue_push_front(
     event_queue* eq, sp_event_task tp_task)
 {
+    if(tp_task->activate_on_requeue())
+        eq->activate();
     if(tp_task->owner() != eq)
         throw MD_ERR(
             "Can't requeue a task created on another event_queue!\n"

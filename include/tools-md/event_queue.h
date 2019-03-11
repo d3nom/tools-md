@@ -91,11 +91,13 @@ public:
     event_queue* owner(){ return _owner;}
     uint64_t id() const { return _id;}
     
-    virtual bool force_push(){ return false;}
+    virtual bool activate_on_requeue() const { return true;}
+    
+    virtual bool force_push() const { return false;}
     virtual void switch_owner(event_queue* new_owner, bool requeue = false);
     
     virtual void run_task() = 0;
-    virtual event_requeue_pos requeue() = 0;
+    virtual event_requeue_pos requeue() const = 0;
     virtual size_t size() const = 0;
     
 protected:
@@ -115,7 +117,7 @@ public:
     virtual ~event_task(){}
     
     virtual void run_task(){ task();}
-    virtual event_requeue_pos requeue() { return event_requeue_pos::none;}
+    virtual event_requeue_pos requeue() const { return event_requeue_pos::none;}
     virtual size_t size() const { return 1;}
 
 private:
@@ -157,6 +159,7 @@ protected:
         static std::shared_ptr<event_queue> _def;
         return _def;
     }
+    
 public:
     static std::shared_ptr<event_queue> get_default()
     {
@@ -164,18 +167,49 @@ public:
             _default() = std::make_shared<event_queue>();
         return _default();
     }
+    static void reset(event_base* ev_base)
+    {
+        _default() = std::make_shared<event_queue>(ev_base);
+    }
     static void destroy_default()
     {
         _default().reset();
     }
     
-    event_queue()
+    event_queue(event_base* ev_base = nullptr)
+        : _ev_base(ev_base), _ev(nullptr)
     {
+        if(!_ev_base)
+            return;
+        
+        _ev = event_new(
+            _ev_base, -1,
+            EV_READ | EV_PERSIST,
+            [](int fd, short events, void* arg){
+                event_queue* eq = (event_queue*)arg;
+                eq->run_n(eq->_tasks.size());
+            },
+            this
+        );
     }
     
     /// @brief Destructor.
     virtual ~event_queue()
     {
+        if(_ev)
+            event_free(_ev);
+        _ev = nullptr;
+    }
+    
+    virtual event_base* ev_base() const
+    {
+        return _ev_base;
+    }
+    
+    virtual void activate()
+    {
+        if(_ev)
+            event_active(_ev, EV_READ, 1);
     }
     
     #ifdef MD_THREAD_SAFE
@@ -206,12 +240,6 @@ public:
         for(auto& t : _tasks)
             sum += t->size();
         return sum;
-        // return std::accumulate(
-        // 	_tasks.begin(), _tasks.end(), 0,
-        // 	[](uint32_t cur_sum, sp_event_task const& it){
-        // 		return cur_sum + it->size();
-        // 	}
-        // );
     }
     
     template<typename T = int>
@@ -264,21 +292,21 @@ public:
     
     /*!
      * 
-     *	\code
-     *		//example: 
-     *		md::async::series({
-     *			[&](md::async_cb scb) -> void {
-     *				return scb(nullptr);
-     *			},
-     *			[&](md::async_cb scb) -> void {
-     *				return scb(nullptr);
-     *			},
-     *		}, [&](const md::cb_error& err) -> void {
-     *			if(err)
-     *				return cb(err, cfg);
-     *			cb(md::cb_error::no_err, cfg);
-     *		});
-     *	\endcode
+     *  \code
+     *      //example: 
+     *      md::async::series({
+     *          [&](md::async_cb scb) -> void {
+     *              return scb(nullptr);
+     *          },
+     *          [&](md::async_cb scb) -> void {
+     *              return scb(nullptr);
+     *          },
+     *      }, [&](const md::cb_error& err) -> void {
+     *          if(err)
+     *              return cb(err, cfg);
+     *          cb(md::cb_error::no_err, cfg);
+     *      });
+     *  \endcode
      */
     void series(
         std::vector< md::callback::async_series_cb > cbs,
@@ -385,6 +413,7 @@ private:
             )
         );
         task->switch_owner(new_owner, false);
+        new_owner->activate();
     }
     
     void run_event_task(sp_event_task& t)
@@ -397,6 +426,8 @@ private:
         if(pos == event_requeue_pos::none)
             return;
         
+        if(t->activate_on_requeue())
+            this->activate();
         if(pos == event_requeue_pos::back){
             MD_LOCK_EVENT_QUEUE;
             _tasks.emplace_back( t );
@@ -411,6 +442,9 @@ private:
     mutable std::mutex _mutex;
     #endif
     std::deque< sp_event_task > _tasks;
+    
+    event_base* _ev_base;
+    event* _ev;
 };
 
 
@@ -419,6 +453,7 @@ template<typename Task,
 >
 uint64_t _event_queue_push_back(event_queue* eq, Task task)
 {
+    eq->activate();
     sp_event_task t(new event_task(eq, md::event_task_fn(task)));
     eq->_tasks.emplace_back(t);
     return t->id();
@@ -429,6 +464,7 @@ template<typename Task,
 >
 uint64_t _event_queue_push_front(event_queue* eq, Task task)
 {
+    eq->activate();
     sp_event_task t(new event_task(eq, md::event_task_fn( task )));
     eq->_tasks.emplace_front(t);
     return t->id();
