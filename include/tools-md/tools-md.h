@@ -37,5 +37,6 @@ SOFTWARE.
 #include "event_strand.h"
 #include "async.h"
 #include "delegate.h"
+#include "matrix.h"
 
 #endif //_tools_md_h
