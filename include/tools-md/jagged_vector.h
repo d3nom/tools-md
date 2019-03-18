@@ -41,6 +41,8 @@ class jagged_vector
     
 public:
     typedef std::vector<T> data_vector;
+    typedef typename std::vector<T>::reference reference;
+    typedef typename std::vector<T>::const_reference const_reference;
     typedef typename std::vector<T>::iterator data_vector_it;
     typedef typename std::vector<T>::const_iterator data_vector_cit;
     typedef typename std::vector<T>::reverse_iterator data_vector_rit;
@@ -50,7 +52,7 @@ public:
     {
         size_t v_idx = 0;
         for(size_t i = 0; i < dim_size; ++i)
-            _vec_dim.emplace_back({v_idx, v_idx});
+            _vec_dim.emplace_back((dim_bounds){v_idx, v_idx});
     }
 
     jagged_vector(size_t dim_size, size_t reserved_total_size)
@@ -59,7 +61,7 @@ public:
         
         size_t v_idx = 0;
         for(size_t i = 0; i < dim_size; ++i)
-            _vec_dim.emplace_back({v_idx, v_idx});
+            _vec_dim.emplace_back((dim_bounds){v_idx, v_idx});
     }
     
     jagged_vector(const data_vector& data)
@@ -68,22 +70,39 @@ public:
         size_t v_idx = 0;
         for(size_t i = 0; i < 1; ++i)
             _vec_dim.emplace_back((dim_bounds){v_idx, data.size()});
-        _vec_data.emplace_back(data.data());
+        std::copy(data.begin(), data.end(), std::back_inserter(_vec_data));
+    }
+    
+    jagged_vector(const std::vector<size_t> segs, const data_vector& data)
+    {
+        size_t v_idx = 0;
+        for(size_t i = 0; i < segs.size(); ++i){
+            _vec_dim.emplace_back((dim_bounds){v_idx, v_idx + segs[i]});
+            v_idx += segs[i];
+        }
+        if(segs.size() == 0)
+            return;
+        
+        _vec_data.reserve(data.size());
+        std::copy(
+            data.begin(), data.end(), std::back_inserter(_vec_data)
+        );
     }
     
     jagged_vector(const std::vector<data_vector>& data)
     {
         size_t v_idx = 0;
         for(size_t i = 0; i < data.size(); ++i){
-            _vec_dim.emplace_back({v_idx, v_idx + data[i].size()});
+            _vec_dim.emplace_back((dim_bounds){v_idx, v_idx + data[i].size()});
             v_idx += data[i].size();
-            _vec_data.emplace_back(data[i].data());
         }
         if(data.size() == 0)
             return;
         _vec_data.reserve(_vec_dim[_vec_dim.size() -1].end_idx);
         for(size_t i = 0; i < data.size(); ++i)
-            _vec_data.emplace_back(data[i].data());
+            std::copy(
+                data[i].begin(), data[i].end(), std::back_inserter(_vec_data)
+            );
     }
     
     jagged_vector(const jagged_vector& other)
@@ -143,24 +162,40 @@ public:
             std::swap(_i, other._i);
         }
         
-        IT& operator *() const
+        template<typename ITT = IT>
+        typename std::enable_if<
+            std::is_const<ITT>::value,
+            const_reference
+        >::type operator *() const
         {
-            return _v[_i];
+            return (*_v)(_d, _i);
         }
         
-        IT& operator *()
+        template<typename ITT = IT>
+        typename std::enable_if<
+            !std::is_const<ITT>::value,
+            reference
+        >::type operator *()
         {
-            return _v[_i];
+            return (*_v)(_d, _i);
         }
         
-        IT& operator ->() const
+        template<typename ITT = IT>
+        typename std::enable_if<
+            std::is_const<ITT>::value,
+            const_reference
+        >::type operator ->() const
         {
-            return _v[_i];
+            return (*_v)(_d, _i);
         }
         
-        IT& operator ->()
+        template<typename ITT = IT>
+        typename std::enable_if<
+            !std::is_const<ITT>::value,
+            reference
+        >::type operator ->()
         {
-            return _v[_i];
+            return (*_v)(_d, _i);
         }
         
         fwd_iterator operator +(size_t inc)
@@ -194,12 +229,14 @@ public:
         template<typename OtherIteratorType>
         bool operator ==(const fwd_iterator<OtherIteratorType>& rhs) const
         {
-            return _v[_i] == rhs._v[_i];
+            return _d == rhs._d && _i == rhs._i;
+            //return _v->(_d, _i) == rhs._v->(_d, _i);
         }
         template<typename OtherIteratorType>
         bool operator !=(const fwd_iterator<OtherIteratorType>& rhs) const
         {
-            return _v[_i] != rhs._v[_i];
+            return _d != rhs._d || _i != rhs._i;
+            //return _v->(_d, _i) != rhs._v->(_d, _i);
         }
         
         // convert iterator to const_iterator
@@ -218,7 +255,9 @@ public:
     typedef fwd_iterator<T> iterator;
     typedef fwd_iterator<const T> const_iterator;
     
-    
+    /**
+     * Returns the number of dimensions.
+     */
     size_t dim_size() const { return _vec_dim.size();}
     size_t size(size_t dim_idx) const
     {
@@ -274,7 +313,7 @@ public:
                 _vec_dim.size() == 0 ? 0 :
                 _vec_dim[_vec_dim.size()-1].end_idx;
             for(size_t i = _vec_dim.size(); i < pos._d; ++i)
-                _vec_dim.emplace_back({v_idx, v_idx});
+                _vec_dim.emplace_back((dim_bounds){v_idx, v_idx});
         }
         
         size_t abs_i = abs_pos(pos._d, pos._i);
@@ -314,19 +353,19 @@ public:
         return erase(__position, __position +1);
     }
     
-    iterator begin(size_t dim_idx) const
+    iterator begin(size_t dim_idx) noexcept
     {
         dim_bounds db;
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
-        return iterator(this, db, db.start_idx);
+        return iterator(this, dim_idx, db, db.start_idx);
     }
-    iterator end(size_t dim_idx) const
+    iterator end(size_t dim_idx) noexcept
     {
         dim_bounds db;
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
-        return iterator(this, db, db.end_idx);
+        return iterator(this, dim_idx, db, db.end_idx);
     }
     
     const_iterator cbegin(size_t dim_idx) const
@@ -334,14 +373,14 @@ public:
         dim_bounds db;
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
-        return const_iterator(this, db, db.start_idx);
+        return const_iterator(this, dim_idx, db, db.start_idx);
     }
     const_iterator cend(size_t dim_idx) const
     {
         dim_bounds db;
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
-        return const_iterator(this, db, db.end_idx);
+        return const_iterator(this, dim_idx, db, db.end_idx);
     }
     
     /**
@@ -353,7 +392,7 @@ public:
             _vec_dim.size() == 0 ? 0 :
             _vec_dim[_vec_dim.size()-1].end_idx;
         for(size_t i = 0; i < dim_size; ++i)
-            _vec_dim.emplace_back({v_idx, v_idx});
+            _vec_dim.emplace_back((dim_bounds){v_idx, v_idx});
     }
     
     void clear() noexcept
@@ -370,19 +409,19 @@ public:
         );
     }
     
-    T& operator()(size_t dim_idx, size_t pos_idx)
+    reference operator()(size_t dim_idx, size_t pos_idx)
     {
-        return _vec_data[abs_pos(dim_idx, pos_idx)];
+        return _vec_data.at(abs_pos(dim_idx, pos_idx));
     }
-    const T& operator()(size_t dim_idx, size_t pos_idx) const
+    const_reference operator()(size_t dim_idx, size_t pos_idx) const
     {
-        return _vec_data[abs_pos(dim_idx, pos_idx)];
+        return _vec_data.at(abs_pos(dim_idx, pos_idx));
     }
-    T& operator[](size_t abs_idx)
+    reference operator[](size_t abs_idx)
     {
         return _vec_data[abs_idx];
     }
-    const T& operator[](size_t abs_idx) const
+    const_reference operator[](size_t abs_idx) const
     {
         return _vec_data[abs_idx];
     }
@@ -423,7 +462,7 @@ public:
         return _vec_data.crend();
     }
     
-    size_t abs_pos(size_t dim_idx, size_t v_idx)
+    size_t abs_pos(size_t dim_idx, size_t v_idx) const
     {
         if(dim_idx >= _vec_dim.size())
             return npos;
@@ -434,10 +473,10 @@ public:
         return _vec_dim[dim_idx].start_idx + v_idx;
     }
     
-    void insert(size_t dim_idx, const T& v, size_t v_idx = npos)
-    {
-        
-    }
+    // void insert(size_t dim_idx, const T& v, size_t v_idx = npos)
+    // {
+    //      
+    // }
     
     static const size_t npos = static_cast<size_t>(-1);
 private:
