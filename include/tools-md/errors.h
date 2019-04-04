@@ -182,9 +182,9 @@ public:
     ~stacked_error(){}
     
     std::string stack() const { return _stack;}
-    md::string_view file(){ return _file;}
-    int line(){ return _line;}
-    md::string_view func(){ return _func;}
+    md::string_view file() const { return _file;}
+    int line() const { return _line;}
+    md::string_view func() const { return _func;}
     
 private:
     std::string _stack;
