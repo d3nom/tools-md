@@ -73,24 +73,15 @@ public:
         md::callback::async_item_cb<T> cb,
         md::callback::async_cb end_cb)
     {
-        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
-
+        std::vector<T> v;
         auto it = first;
-
-        if(it == last){
-            eq->push_back(std::bind(end_cb, nullptr));
-            return;
+        while(it != last){
+            v.emplace_back(*it);
+            ++it;
         }
-        eq->push_back(
-            std::bind(
-                each_iter<Iterator, T>, 
-                eq, last, it, cb, end_cb
-            )
-        );
+        each(md::event_queue::get_default(), v, cb, end_cb);
     }
-
-
-
+    
     template<
         typename Iterator,
         typename T,
@@ -125,20 +116,62 @@ public:
         md::callback::async_item_cb<T> cb,
         md::callback::async_cb end_cb)
     {
+        std::vector<T> v;
         auto it = first;
-        //typename Container::const_iterator it = elements.begin();
-        if(it == last){
-            eq->push_back(std::bind(end_cb, nullptr));
-            return;
+        while(it != last){
+            v.emplace_back(*it);
+            ++it;
         }
-        
-        eq->push_back(
-            std::bind(
-                each_iter<Iterator, T>, 
-                eq, last, it, cb, end_cb
-            )
-        );
+        each(eq, v, cb, end_cb);
     }
+    
+    
+    template<typename T>
+    static void each(
+        std::vector<T> v,
+        md::callback::async_item_cb<T> cb,
+        md::callback::async_cb end_cb)
+    {
+        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        each<T>(eq, v, cb, end_cb);
+    }
+    
+    template<typename T>
+    static void each(
+        std::shared_ptr<event_queue> eq,
+        std::vector<T> v,
+        md::callback::async_item_cb<T> cb,
+        md::callback::async_cb end_cb)
+    {
+        auto strand = eq->new_strand<md::callback::cb_error>(false);
+        for(auto i = 0U; i < v.size(); ++i){
+            strand->push_back([strand, cb, it = v[i]]() -> void {
+                if(strand->data()){
+                    strand->requeue_self_back();
+                    return;
+                }
+                
+                auto cb_called = std::make_shared<bool>(false);
+                cb(it, (md::callback::async_cb)[strand, cb_called]
+                (const md::callback::cb_error& err) -> void {
+                    if(*cb_called)
+                        md::log::default_logger()->fatal(MD_ERR(
+                            "Callback already called once!"
+                        ));
+                    *cb_called = true;
+                    if(err)
+                        strand->data(err);
+                    
+                    strand->requeue_self_back();
+                });
+            });
+        }
+        strand->push_back([strand, end_cb]() -> void {
+            end_cb(strand->data());
+        });
+        strand->requeue_self_back();
+    }
+    
 
     /*!
      * 
@@ -191,59 +224,59 @@ public:
         }
         strand->push_back([strand, end_cb]() -> void {
             end_cb(strand->data());
-            strand->requeue_self_back();
+            //strand->requeue_self_back();
         });
         strand->requeue_self_back();
     }
     
 private:
 
-    template<
-        typename Iterator,
-        typename T = typename std::iterator_traits<Iterator>::value_type
-    >
-    static void each_iter(
-        std::shared_ptr<event_queue> eq,
-        Iterator last, Iterator it,
-        md::callback::async_item_cb<T> cb,
-        md::callback::async_cb end_cb)
-    {
-        cb(
-            (*it),
-            std::bind(
-                each_iter_cb<Iterator, T>,
-                eq, last, it, cb, end_cb,
-                std::placeholders::_1
-            )
-        );
-    }
+//     template<
+//         typename Iterator,
+//         typename T = typename std::iterator_traits<Iterator>::value_type
+//     >
+//     static void each_iter(
+//         std::shared_ptr<event_queue> eq,
+//         Iterator last, Iterator it,
+//         md::callback::async_item_cb<T> cb,
+//         md::callback::async_cb end_cb)
+//     {
+//         cb(
+//             (*it),
+//             std::bind(
+//                 each_iter_cb<Iterator, T>,
+//                 eq, last, it, cb, end_cb,
+//                 std::placeholders::_1
+//             )
+//         );
+//     }
     
-    template<
-        typename Iterator,
-        typename T = typename std::iterator_traits<Iterator>::value_type
-    >
-    static void each_iter_cb(
-        std::shared_ptr<event_queue> eq,
-        Iterator last, Iterator it,
-        md::callback::async_item_cb<T> cb,
-        md::callback::async_cb end_cb,
-        const md::callback::cb_error& err)
-    {
-        if(err){
-            eq->push_back(std::bind(end_cb, err));
-            return;
-        }
+//     template<
+//         typename Iterator,
+//         typename T = typename std::iterator_traits<Iterator>::value_type
+//     >
+//     static void each_iter_cb(
+//         std::shared_ptr<event_queue> eq,
+//         Iterator last, Iterator it,
+//         md::callback::async_item_cb<T> cb,
+//         md::callback::async_cb end_cb,
+//         const md::callback::cb_error& err)
+//     {
+//         if(err){
+//             eq->push_back(std::bind(end_cb, err));
+//             return;
+//         }
         
-        if(++it != last)
-            eq->push_back(
-                std::bind(
-                    each_iter<Iterator, T>, 
-                    eq, last, it, cb, end_cb
-                )
-            );
-        else
-            eq->push_back(std::bind(end_cb, nullptr));
-    }
+//         if(++it != last)
+//             eq->push_back(
+//                 std::bind(
+//                     each_iter<Iterator, T>, 
+//                     eq, last, it, cb, end_cb
+//                 )
+//             );
+//         else
+//             eq->push_back(std::bind(end_cb, nullptr));
+//     }
     
 };
 

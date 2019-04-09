@@ -229,6 +229,11 @@ public:
             sink->flush();
     }
     
+    void trace(md::string_view f) const
+    {
+        if(should_log(log_level::trace))
+            log(_path, log_level::trace, f);
+    }
     template <typename... Args>
     void trace(md::string_view f, const Args&... args) const
     {
@@ -241,6 +246,11 @@ public:
             log(_path, log_level::trace, err);
     }
     
+    void debug(md::string_view f) const
+    {
+        if(should_log(log_level::debug))
+            log(_path, log_level::debug, f);
+    }
     template <typename... Args>
     void debug(md::string_view f, const Args&... args) const
     {
@@ -253,6 +263,11 @@ public:
             log(_path, log_level::debug, err);
     }
     
+    void info(md::string_view f) const
+    {
+        if(should_log(log_level::info))
+            log(_path, log_level::info, f);
+    }
     template <typename... Args>
     void info(md::string_view f, const Args&... args) const
     {
@@ -265,6 +280,11 @@ public:
             log(_path, log_level::info, err);
     }
     
+    void warn(md::string_view f) const
+    {
+        if(should_log(log_level::warning))
+            log(_path, log_level::warning, f);
+    }
     template <typename... Args>
     void warn(md::string_view f, const Args&... args) const
     {
@@ -277,6 +297,11 @@ public:
             log(_path, log_level::warning, err);
     }
     
+    void error(md::string_view f) const
+    {
+        if(should_log(log_level::error))
+            log(_path, log_level::error, f);
+    }
     template <typename... Args>
     void error(md::string_view f, const Args&... args) const
     {
@@ -289,6 +314,11 @@ public:
             log(_path, log_level::error, err);
     }
     
+    void fatal(md::string_view f) const
+    {
+        if(should_log(log_level::fatal))
+            log(_path, log_level::fatal, f);
+    }
     template <typename... Args>
     void fatal(md::string_view f, const Args&... args) const
     {
@@ -303,6 +333,11 @@ public:
             log(_path, log_level::fatal, err);
     }
     
+    void success(md::string_view f) const
+    {
+        if(should_log(log_level::audit_succeeded))
+            log(_path, log_level::audit_succeeded, f);
+    }
     template <typename... Args>
     void success(md::string_view f, const Args&... args) const
     {
@@ -318,6 +353,11 @@ public:
             log(_path, log_level::audit_succeeded, err);
     }
 
+    void fail(md::string_view f) const
+    {
+        if(should_log(log_level::audit_failed))
+            log(_path, log_level::audit_failed, f);
+    }
     template <typename... Args>
     void fail(md::string_view f, const Args&... args) const
     {
@@ -699,6 +739,11 @@ inline md::log::sp_logger& default_logger()
 }
 
 
+inline void trace(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::trace))
+        log::default_logger()->log("/", log_level::trace, f);
+}
 template <typename... Args>
 void trace(md::string_view f, const Args&... args)
 {
@@ -708,6 +753,11 @@ void trace(md::string_view f, const Args&... args)
         );
 }
 
+inline void debug(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::debug))
+        log::default_logger()->log("/", log_level::debug, f);
+}
 template <typename... Args>
 void debug(md::string_view f, const Args&... args)
 {
@@ -717,6 +767,11 @@ void debug(md::string_view f, const Args&... args)
         );
 }
 
+inline void info(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::info))
+        log::default_logger()->log("/", log_level::info, f);
+}
 template <typename... Args>
 void info(md::string_view f, const Args&... args)
 {
@@ -726,6 +781,11 @@ void info(md::string_view f, const Args&... args)
         );
 }
 
+inline void warn(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::warning))
+        log::default_logger()->log("/", log_level::warning, f);
+}
 template <typename... Args>
 void warn(md::string_view f, const Args&... args)
 {
@@ -735,6 +795,11 @@ void warn(md::string_view f, const Args&... args)
         );
 }
 
+inline void error(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::error))
+        log::default_logger()->log("/", log_level::error, f);
+}
 template <typename... Args>
 void error(md::string_view f, const Args&... args)
 {
@@ -744,6 +809,11 @@ void error(md::string_view f, const Args&... args)
         );
 }
 
+inline void fatal(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::fatal))
+        log::default_logger()->log("/", log_level::fatal, f);
+}
 template <typename... Args>
 void fatal(md::string_view f, const Args&... args)
 {
@@ -755,6 +825,11 @@ void fatal(md::string_view f, const Args&... args)
     std::exit(-1);
 }
 
+inline void success(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::audit_succeeded))
+        log::default_logger()->log("/", log_level::audit_succeeded, f);
+}
 template <typename... Args>
 void success(md::string_view f, const Args&... args)
 {
@@ -765,6 +840,11 @@ void success(md::string_view f, const Args&... args)
         );
 }
 
+inline void fail(md::string_view f)
+{
+    if(log::default_logger()->should_log(log_level::audit_failed))
+        log::default_logger()->log("/", log_level::audit_failed, f);
+}
 template <typename... Args>
 void fail(md::string_view f, const Args&... args)
 {
