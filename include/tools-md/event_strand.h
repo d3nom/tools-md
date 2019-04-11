@@ -156,6 +156,18 @@ public:
         );
     }
     
+    void requeue_self_last_front()
+    {
+        this->_tasks.erase(
+            this->_tasks.begin(),
+            this->_tasks.begin() + (this->_tasks.size() -1)
+        );
+        this->_owner->push_front(
+            MD_STRAND_TO_TASKBASE(this->shared_from_this())
+        );
+    }
+
+    
 private:
     #ifdef MD_THREAD_SAFE
     mutable std::mutex _mutex;

@@ -148,6 +148,7 @@ public:
             strand->push_back([strand, cb, it = v[i]]() -> void {
                 if(strand->data()){
                     strand->requeue_self_back();
+                    strand->activate();
                     return;
                 }
                 
@@ -159,10 +160,15 @@ public:
                             "Callback already called once!"
                         ));
                     *cb_called = true;
-                    if(err)
+                    if(err){
                         strand->data(err);
+                        strand->requeue_self_last_front();
+                        strand->activate();
+                        return;
+                    }
                     
                     strand->requeue_self_back();
+                    strand->activate();
                 });
             });
         }
@@ -170,6 +176,7 @@ public:
             end_cb(strand->data());
         });
         strand->requeue_self_back();
+        strand->activate();
     }
     
 
