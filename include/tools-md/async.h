@@ -180,20 +180,28 @@ public:
     }
     
 
+
+    static void series(
+        std::vector< md::callback::async_series_cb > cbs,
+        md::callback::async_cb end_cb)
+    {
+        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        series(eq, cbs, end_cb);
+    }
     /*!
      * 
      *	example: 
-     *      pq_async::async::series({
-     *          [&](pq_async::async_cb scb) -> void {
+     *      md::async::series({
+     *          [&](md::async_cb scb) -> void {
      *              return scb(nullptr);
      *          },
-     *          [&](pq_async::async_cb scb) -> void {
+     *          [&](md::async_cb scb) -> void {
      *              return scb(nullptr);
      *          },
-     *      }, [&](const pq_async::cb_error& err) -> void {
+     *      }, [&](const md::callback::cb_error& err) -> void {
      *          if(err)
      *              return cb(err, cfg);
-     *          cb(pq_async::cb_error::no_err, cfg);
+     *          cb(nullptr, cfg);
      *      });
      */
     static void series(
