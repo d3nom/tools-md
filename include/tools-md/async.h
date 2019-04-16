@@ -219,6 +219,7 @@ public:
             strand->push_back([strand, cb = cbs[i]]() -> void {
                 if(strand->data()){
                     strand->requeue_self_back();
+                    strand->activate();
                     return;
                 }
                 
@@ -234,14 +235,15 @@ public:
                         strand->data(err);
                     
                     strand->requeue_self_back();
+                    strand->activate();
                 });
             });
         }
         strand->push_back([strand, end_cb]() -> void {
             end_cb(strand->data());
-            //strand->requeue_self_back();
         });
         strand->requeue_self_back();
+        strand->activate();
     }
     
 private:
