@@ -355,14 +355,14 @@ public:
     
     iterator begin(size_t dim_idx) noexcept
     {
-        dim_bounds db;
+        dim_bounds db{0,0};
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
         return iterator(this, dim_idx, db, db.start_idx);
     }
     iterator end(size_t dim_idx) noexcept
     {
-        dim_bounds db;
+        dim_bounds db{0,0};
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
         return iterator(this, dim_idx, db, db.end_idx);
@@ -370,14 +370,14 @@ public:
     
     const_iterator cbegin(size_t dim_idx) const
     {
-        dim_bounds db;
+        dim_bounds db{0,0};
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
         return const_iterator(this, dim_idx, db, db.start_idx);
     }
     const_iterator cend(size_t dim_idx) const
     {
-        dim_bounds db;
+        dim_bounds db{0,0};
         if(dim_idx < _vec_dim.size())
             db = _vec_dim[dim_idx];
         return const_iterator(this, dim_idx, db, db.end_idx);
