@@ -131,6 +131,31 @@ inline void trim(std::string &s)
     rtrim(s);
 }
 
+
+// trim from start (in place)
+inline void ltrim(std::string &s, char tch)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [tch](int ch) {
+        return ch != tch;
+    }));
+}
+
+// trim from end (in place)
+inline void rtrim(std::string &s, char tch)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), [tch](int ch) {
+        return ch != tch;
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+inline void trim(std::string &s, char tch)
+{
+    ltrim(s, tch);
+    rtrim(s, tch);
+}
+
+
 // trim from start (copying)
 inline std::string ltrim_copy(std::string s)
 {
@@ -151,6 +176,28 @@ inline std::string trim_copy(std::string s)
     trim(s);
     return s;
 }
+
+// trim from start (copying)
+inline std::string ltrim_copy(std::string s, char tch)
+{
+    ltrim(s, tch);
+    return s;
+}
+
+// trim from end (copying)
+inline std::string rtrim_copy(std::string s, char tch)
+{
+    rtrim(s, tch);
+    return s;
+}
+
+// trim from both ends (copying)
+inline std::string trim_copy(std::string s, char tch)
+{
+    trim(s, tch);
+    return s;
+}
+
 
 template< typename T >
 inline std::string join(const T& lst, const std::string& separator)
