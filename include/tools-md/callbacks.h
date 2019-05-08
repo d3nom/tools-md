@@ -46,6 +46,13 @@ template<typename T>
 using async_item_cb = typename std::function<void(const T& val, async_cb)>;
 typedef std::function<void(async_cb)> async_series_cb;
 
+template<typename T>
+using async_waterfall_cb = 
+    typename std::function<void(T& val, value_cb<T>)>;
+template<typename T>
+using async_value_cb = typename std::function<void(const T& val, value_cb<T>)>;
+
+
 inline void noop_cb(const cb_error& err)
 {
     if(err)

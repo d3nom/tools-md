@@ -250,8 +250,84 @@ public:
         strand->activate();
     }
     
+    template<typename T>
+    class waterfall_data_t
+    {
+    public:
+        T data;
+        md::callback::cb_error err;
+    };
+    template<typename T>
+    using waterfall_data = std::shared_ptr<waterfall_data_t<T>>;
+    
+    template<typename T>
+    static void waterfall(
+        std::vector< md::callback::async_waterfall_cb<T> > cbs,
+        md::callback::value_cb<T> end_cb)
+    {
+        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        waterfall<T>(eq, cbs, end_cb);
+    }
+    
+    template<typename T>
+    static void waterfall(
+        std::shared_ptr<event_queue> eq,
+        std::vector< md::callback::async_waterfall_cb<T> > cbs,
+        md::callback::value_cb<T> end_cb)
+    {
+        if(cbs.size() == 0){
+            eq->push_back(std::bind(end_cb, nullptr));
+            return;
+        }
+        
+        auto strand = eq->new_strand<waterfall_data<T>>(false);
+        strand->data(std::make_shared<waterfall_data_t<T>>());
+        
+        for(auto i = 0U; i < cbs.size(); ++i){
+            strand->push_back([strand, cb = cbs[i]]() -> void {
+                if(strand->data()->err){
+                    strand->requeue_self_back();
+                    strand->activate();
+                    return;
+                }
+                
+                auto cb_called = std::make_shared<bool>(false);
+                cb(
+                    strand->data()->data,
+                    
+                    //(md::callback::value_cb<T>)
+                    [strand, cb_called]
+                    (const md::callback::cb_error& err, T new_data) -> void {
+                        if(*cb_called)
+                            md::log::default_logger()->fatal(MD_ERR(
+                                "Callback already called once!"
+                            ));
+                        *cb_called = true;
+                        if(err){
+                            strand->data()->err = err;
+                            strand->requeue_self_last_front();
+                            strand->activate();
+                            return;
+                        }
+                        
+                        strand->data()->data = new_data;
+                        strand->requeue_self_back();
+                        strand->activate();
+                    }
+                );
+            });
+        }
+        strand->push_back([strand, end_cb]() -> void {
+            end_cb(strand->data()->err, strand->data()->data);
+        });
+        strand->requeue_self_back();
+        strand->activate();
+    }
+    
 private:
-
+    
+    
+    
 //     template<
 //         typename Iterator,
 //         typename T = typename std::iterator_traits<Iterator>::value_type
