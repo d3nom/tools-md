@@ -37,9 +37,22 @@ SOFTWARE.
 
 namespace md{
 
+
 class async final
 {
+private:
     async(){}
+    
+    template<typename T>
+    class waterfall_data_t
+    {
+    public:
+        T data;
+        md::callback::cb_error err;
+    };
+    template<typename T>
+    using waterfall_data = std::shared_ptr<waterfall_data_t<T>>;
+    
 public:
     
     template<
@@ -250,15 +263,6 @@ public:
         strand->activate();
     }
     
-    template<typename T>
-    class waterfall_data_t
-    {
-    public:
-        T data;
-        md::callback::cb_error err;
-    };
-    template<typename T>
-    using waterfall_data = std::shared_ptr<waterfall_data_t<T>>;
     
     template<typename T>
     static void waterfall(
@@ -275,13 +279,14 @@ public:
         std::vector< md::callback::async_waterfall_cb<T> > cbs,
         md::callback::value_cb<T> end_cb)
     {
+        auto sdata = std::make_shared<waterfall_data_t<T>>();
         if(cbs.size() == 0){
-            eq->push_back(std::bind(end_cb, nullptr));
+            eq->push_back(std::bind(end_cb, nullptr, sdata->data));
             return;
         }
         
         auto strand = eq->new_strand<waterfall_data<T>>(false);
-        strand->data(std::make_shared<waterfall_data_t<T>>());
+        strand->data(sdata);
         
         for(auto i = 0U; i < cbs.size(); ++i){
             strand->push_back([strand, cb = cbs[i]]() -> void {
@@ -323,57 +328,6 @@ public:
         strand->requeue_self_back();
         strand->activate();
     }
-    
-private:
-    
-    
-    
-//     template<
-//         typename Iterator,
-//         typename T = typename std::iterator_traits<Iterator>::value_type
-//     >
-//     static void each_iter(
-//         std::shared_ptr<event_queue> eq,
-//         Iterator last, Iterator it,
-//         md::callback::async_item_cb<T> cb,
-//         md::callback::async_cb end_cb)
-//     {
-//         cb(
-//             (*it),
-//             std::bind(
-//                 each_iter_cb<Iterator, T>,
-//                 eq, last, it, cb, end_cb,
-//                 std::placeholders::_1
-//             )
-//         );
-//     }
-    
-//     template<
-//         typename Iterator,
-//         typename T = typename std::iterator_traits<Iterator>::value_type
-//     >
-//     static void each_iter_cb(
-//         std::shared_ptr<event_queue> eq,
-//         Iterator last, Iterator it,
-//         md::callback::async_item_cb<T> cb,
-//         md::callback::async_cb end_cb,
-//         const md::callback::cb_error& err)
-//     {
-//         if(err){
-//             eq->push_back(std::bind(end_cb, err));
-//             return;
-//         }
-        
-//         if(++it != last)
-//             eq->push_back(
-//                 std::bind(
-//                     each_iter<Iterator, T>, 
-//                     eq, last, it, cb, end_cb
-//                 )
-//             );
-//         else
-//             eq->push_back(std::bind(end_cb, nullptr));
-//     }
     
 };
 
