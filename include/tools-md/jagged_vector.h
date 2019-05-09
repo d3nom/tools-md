@@ -288,7 +288,7 @@ public:
     {
         if(dim_idx == _vec_dim.size() -1){
             _vec_dim[_vec_dim.size()-1].end_idx += sizeof...(Args);
-            _vec_data->emplace_back(v...);
+            _vec_data.emplace_back(v...);
             return;
         }
         
@@ -298,7 +298,7 @@ public:
             pos = _vec_dim[dim_idx].end_idx +1;
         }
         this->emplace(
-            dim_idx,
+            //dim_idx,
             const_iterator(this, dim_idx, b, pos),
             v...
         );
@@ -324,7 +324,8 @@ public:
             _vec_dim[i].end_idx += s;
         }
         
-        _vec_data.emplace(abs_i, v...);
+        typename data_vector::iterator abs_it = _vec_data.begin() + abs_i;
+        _vec_data.emplace(abs_it, v...);
     }
     
     iterator erase(
