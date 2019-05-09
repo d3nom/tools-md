@@ -282,9 +282,14 @@ public:
         
         return _vec_data.data() + _vec_dim[dim_idx].start_idx;
     }
+
+    void emplace_back(size_t dim_idx)
+    {
+        throw std::runtime_error("no value provided!");
+    }
     
     template<typename... Args>
-    void emplace_back(size_t dim_idx, const Args&&... v)
+    void emplace_back(size_t dim_idx, Args&&... v)
     {
         if(dim_idx == _vec_dim.size() -1){
             _vec_dim[_vec_dim.size()-1].end_idx += sizeof...(Args);
@@ -305,7 +310,7 @@ public:
     }
     
     template<typename... Args>
-    void emplace(const_iterator pos, const Args&&... v)
+    void emplace(const_iterator pos, Args&&... v)
     {
         // add empty dimensions
         if(pos._d >= _vec_dim.size()){
