@@ -38,7 +38,7 @@ class md_test_env
     : public testing::Environment
 {
 public:
-    pq_async_test_env()
+    md_test_env()
         : testing::Environment(),
         _ev_base(nullptr)
     {
@@ -47,11 +47,11 @@ public:
     void SetUp() override
     {
         std::cout << "Forcing time_zone initialization" << std::endl;
-        auto cz = hhdate::current_zone();
+        auto cz = ::date::current_zone();
         std::cout << "Current time zone: " << cz->name() << std::endl;
         
         std::cout << "Initializing the log setting" << std::endl;
-        md::default_logger()->set_level(
+        md::log::default_logger()->set_level(
             (md::log::log_level)md_tests_log_level
         );
         
@@ -64,7 +64,7 @@ public:
     {
         std::cout << "Destroying the event_queue" << std::endl;
         md::event_queue::destroy_default();
-        event_free(_ev_base);
+        event_base_free(_ev_base);
         _ev_base = nullptr;
     }
     

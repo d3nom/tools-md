@@ -29,6 +29,7 @@ SOFTWARE.
 #include "text.h"
 #include "files.h"
 
+#include "date/date.h"
 #include "fmt/format.h"
 
 #include <sstream>

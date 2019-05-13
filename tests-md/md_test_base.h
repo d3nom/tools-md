@@ -31,7 +31,7 @@ SOFTWARE.
 
 namespace md{ namespace tests{
     
-    class db_test_base
+    class md_test_base
         : public testing::Test
     {
     public:
