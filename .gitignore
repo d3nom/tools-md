@@ -6,6 +6,7 @@
 build
 include/tools-md/md_export.h
 include/tools-md/md_config.h
+tests-md/md_config.h
 
 ##################
 ## CMake ignore ##

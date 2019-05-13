@@ -22,7 +22,7 @@ endif()
 # tests
 if(MD_BUILD_TESTS)
     subdirs(tests-md)
-    add_test(alltests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libtools-md_tests)
+    add_test(alltests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tools-md_tests)
     enable_testing()
 endif()
 
