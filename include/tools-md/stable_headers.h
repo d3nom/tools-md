@@ -52,10 +52,16 @@ SOFTWARE.
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
+#include <boost/version.hpp>
+
 #ifdef MD_USE_STD_STRING_VIEW
     #include <string_view>
 #else
+    #if BOOST_VERSION < 106400
+    #include <boost/utility/string_ref.hpp>
+    #else
     #include <boost/utility/string_view.hpp>
+    #endif
 #endif //MD_USE_STD_STRING_VIEW
 
 #include <date/date.h>
@@ -72,11 +78,19 @@ namespace bfs = boost::filesystem;
     template<class CharT, class Traits>
     using basic_string_view = std::basic_string_view<CharT, Traits>;
 #else
+    #if BOOST_VERSION < 106400
+    /// The type of string view used by the library
+    using string_view = boost::string_ref;
+    /// The type of basic string view used by the library
+    template<class CharT, class Traits>
+    using basic_string_view = boost::basic_string_ref<CharT, Traits>;
+    #else
     /// The type of string view used by the library
     using string_view = boost::string_view;
     /// The type of basic string view used by the library
     template<class CharT, class Traits>
     using basic_string_view = boost::basic_string_view<CharT, Traits>;
+    #endif
 #endif //MD_USE_STD_STRING_VIEW
 }//::md
 
