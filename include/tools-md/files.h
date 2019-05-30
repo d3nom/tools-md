@@ -45,27 +45,35 @@ namespace md{ namespace files{
 /* Write "n" bytes to a descriptor. */
 inline ssize_t writen(int fd, const void *vptr, size_t n)
 {
-    size_t nleft;
-    ssize_t nwritten;
-    const char* ptr;
-    
-    ptr = (const char*)vptr;
-    nleft = n;
-    while(nleft > 0){
-        if((nwritten = write(fd, ptr, nleft)) <= 0){
-            if(errno == EINTR)
-                nwritten = 0;/* and call write() again */
-            else if(errno == EAGAIN || errno == EWOULDBLOCK){
-                fsync(fd);
-                nwritten = 0;/* and call write() again */
-            }else
-                return(-1);/* error */
-        }
+    try{
+        size_t nleft;
+        ssize_t nwritten;
+        const char* ptr;
         
-        nleft -= nwritten;
-        ptr   += nwritten;
+        ptr = (const char*)vptr;
+        nleft = n;
+        while(nleft > 0){
+            if((nwritten = write(fd, ptr, nleft)) <= 0){
+                if(errno == EINTR)
+                    nwritten = 0;/* and call write() again */
+                else if(errno == EAGAIN || errno == EWOULDBLOCK){
+                    fsync(fd);
+                    nwritten = 0;/* and call write() again */
+                }else
+                    return(-1);/* error */
+            }
+            
+            nleft -= nwritten;
+            ptr   += nwritten;
+        }
+        return(n);
+    }catch(const std::exception& err){
+        std::cerr <<
+            "Unable to write data to fd\nerr: " <<
+            err.what() <<
+            std::endl;
+        return -1;
     }
-    return(n);
 }
 
 
