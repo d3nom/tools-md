@@ -234,7 +234,7 @@ public:
         md::callback::cb_error err) const
     {
         std::string log_val = err.c_str();
-        if(err.has_stack())
+        if(err.has_stack() && log_err_stack())
             log_val += fmt::format(
                 "\n\nAdditional info\n\n{}:{}\n{}\n\n{}\n",
                 err.file(), err.line(), err.func(), err.stack()
