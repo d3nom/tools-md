@@ -110,8 +110,8 @@ namespace sinks{
         }
         
     protected:
-        log_level _lvl;
-        log_level _flush_on_lvl;
+        log_level   _lvl;
+        log_level   _flush_on_lvl;
     };
 } // ns: md::log::sinks
 
@@ -131,7 +131,8 @@ private:
     logger(const std::shared_ptr<const logger>& parent, md::string_view path)
         : sinks::logger_sink(parent->_lvl),
         _parent(parent),
-        _path(path.data())
+        _path(path.data()),
+        _log_err_stack(-1)
     {
     }
     
@@ -191,6 +192,26 @@ public:
             ((logger*)_parent.get())->replace_sink(sink);
         else
             register_sink(sink);
+    }
+    
+    bool log_err_stack() const
+    {
+        if(_log_err_stack == 1)
+            return true;
+        else if(_log_err_stack == 0)
+            return false;
+        else if(this->_parent)
+            return this->_parent->log_err_stack();
+        
+        return false;
+    }
+    void reset_err_stack()
+    {
+        _log_err_stack = -1;
+    }
+    void log_err_stack(bool log_stack)
+    {
+        _log_err_stack = log_stack ? 1 : 0;
     }
     
     void log(
@@ -373,9 +394,11 @@ public:
     
 private:
     
-    std::shared_ptr<const logger> _parent;
-    std::string _path;
-    std::vector<sinks::sp_logger_sink> _sinks;
+    std::shared_ptr<const logger>       _parent;
+    std::string                         _path;
+    std::vector<sinks::sp_logger_sink>  _sinks;
+    int32_t                             _log_err_stack;
+
 };
 
 namespace sinks{
