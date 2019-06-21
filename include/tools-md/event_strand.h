@@ -56,7 +56,7 @@ class event_strand_t
 public:
     event_strand_t(bool auto_requeue = true, bool activate_on_requeue = true)
         : event_queue_t(),
-        event_task_base_t(event_queue::get_default()),
+        event_task_base_t(event_queue_t::get_default()),
         _auto_requeue(auto_requeue),
         _activate_on_requeue(activate_on_requeue)
     {
