@@ -42,15 +42,15 @@ class event_strand_t
     friend class md::event_queue_t;
 
     template< typename Task >
-    friend uint64_t _event_strand_push_back(event_queue* eq, Task task);
+    friend uint64_t _event_strand_push_back(event_queue_t* eq, Task task);
     friend uint64_t _event_strand_push_back(
-        event_queue* eq, event_task task
+        event_queue_t* eq, event_task task
     );
 
     template< typename Task >
-    friend uint64_t _event_strand_push_front(event_queue* eq, Task task);
+    friend uint64_t _event_strand_push_front(event_queue_t* eq, Task task);
     friend uint64_t _event_strand_push_front(
-        event_queue* eq, event_task task
+        event_queue_t* eq, event_task task
     );
     
 public:
@@ -62,7 +62,7 @@ public:
     {
     }
     
-    event_strand_t(event_queue* owner, bool auto_requeue = true)
+    event_strand_t(event_queue_t* owner, bool auto_requeue = true)
         : event_queue_t(),
         event_task_base_t(owner),
         _auto_requeue(auto_requeue)
