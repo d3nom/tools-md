@@ -28,48 +28,48 @@ SOFTWARE.
 #include "event_queue.h"
 
 #define MD_STRAND_TO_TASKBASE(x)  \
-std::static_pointer_cast<md::event_task_base>( \
-    std::static_pointer_cast<md::event_strand<T>>(x) \
+std::static_pointer_cast<md::event_task_base_t>( \
+    std::static_pointer_cast<md::event_strand_t<T>>(x) \
 )
 
 namespace md{
 
 template<typename T = int>
-class event_strand
-    : public event_queue, public event_task_base//, 
-    //public std::enable_shared_from_this< event_strand<T> >
+class event_strand_t
+    : public event_queue_t, public event_task_base_t//, 
+    //public std::enable_shared_from_this< event_strand_t<T> >
 {
-    friend class md::event_queue;
+    friend class md::event_queue_t;
 
     template< typename Task >
     friend uint64_t _event_strand_push_back(event_queue* eq, Task task);
     friend uint64_t _event_strand_push_back(
-        event_queue* eq, sp_event_task task
+        event_queue* eq, event_task task
     );
 
     template< typename Task >
     friend uint64_t _event_strand_push_front(event_queue* eq, Task task);
     friend uint64_t _event_strand_push_front(
-        event_queue* eq, sp_event_task task
+        event_queue* eq, event_task task
     );
     
 public:
-    event_strand(bool auto_requeue = true, bool activate_on_requeue = true)
-        : event_queue(),
-        event_task_base(event_queue::get_default()),
+    event_strand_t(bool auto_requeue = true, bool activate_on_requeue = true)
+        : event_queue_t(),
+        event_task_base_t(event_queue::get_default()),
         _auto_requeue(auto_requeue),
         _activate_on_requeue(activate_on_requeue)
     {
     }
     
-    event_strand(event_queue* owner, bool auto_requeue = true)
-        : event_queue(),
-        event_task_base(owner),
+    event_strand_t(event_queue* owner, bool auto_requeue = true)
+        : event_queue_t(),
+        event_task_base_t(owner),
         _auto_requeue(auto_requeue)
     {
     }
     
-    virtual ~event_strand()
+    virtual ~event_strand_t()
     {
         for(size_t i = 0; i < _tasks.size(); ++i){
             _tasks[i]->_owner = this->_owner;
@@ -177,80 +177,6 @@ private:
     bool _activate_on_requeue;
     T _data;
 };
-
-/*
-template <>
-uint64_t event_strand::push_back(sp_event_task tp_task)
-{
-    _evq_lock lock(_mutex, _is_thread_safe.load(std::memory_order_acquire));
-    
-    if(tp_task->_owner != this)
-        throw md::exception(
-            "Can't requeue a task created on another event_queue!\n"
-            "Call the event_task::switch_owner function instead."
-        );
-    
-    if(tp_task->force_push()){
-        _tasks.emplace_back(tp_task);
-        this->_owner->push_back(
-            MD_STRAND_TO_TASKBASE(this->shared_from_this())
-        );
-        return tp_task->id();
-    }
-    
-    auto it = std::find_if(
-        _tasks.begin(),
-        _tasks.end(),
-        [task_id=tp_task->id()](const sp_event_task& t)-> bool {
-            return t->id() == task_id;
-        }
-    );
-    
-    if(it != _tasks.end())
-        return tp_task->id();
-    _tasks.emplace_back(tp_task);
-    this->_owner->push_back(
-        MD_STRAND_TO_TASKBASE(this->shared_from_this())
-    );
-    return tp_task->id();
-}
-
-template <>
-uint64_t event_strand::push_front(sp_event_task tp_task)
-{
-    _evq_lock lock(_mutex, _is_thread_safe.load(std::memory_order_acquire));
-
-    if(tp_task->_owner != this)
-        throw md::exception(
-            "Can't requeue a task created on another event_queue!\n"
-            "Call the event_task::switch_owner function instead."
-        );
-    
-    if(tp_task->force_push()){
-        _tasks.emplace_back(tp_task);
-        this->_owner->push_back(
-            MD_STRAND_TO_TASKBASE(this->shared_from_this())
-        );
-        return tp_task->id();
-    }
-        
-    auto it = std::find_if(
-        _tasks.begin(),
-        _tasks.end(),
-        [task_id=tp_task->id()](const sp_event_task& t)-> bool {
-            return t->id() == task_id;
-        }
-    );
-    
-    if(it != _tasks.end())
-        return tp_task->id();
-    _tasks.emplace_front(tp_task);
-    this->_owner->push_back(
-        MD_STRAND_TO_TASKBASE(this->shared_from_this())
-    );
-    return tp_task->id();
-}
-*/
 
 
 

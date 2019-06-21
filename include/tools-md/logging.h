@@ -37,9 +37,9 @@ SOFTWARE.
 
 namespace md { namespace log{
 
-class logger;
-typedef std::shared_ptr<logger> sp_logger;
-md::log::sp_logger& default_logger();
+class logger_t;
+typedef std::shared_ptr<logger_t> logger;
+md::log::logger& default_logger();
 
 enum class log_level
 {
@@ -72,13 +72,13 @@ inline md::string_view to_string(log_level lvl)
 
 namespace sinks{
     
-    class logger_sink;
-    typedef std::shared_ptr<logger_sink> sp_logger_sink;
+    class logger_sink_t;
+    typedef std::shared_ptr<logger_sink_t> logger_sink;
     
-    class logger_sink
+    class logger_sink_t
     {
     public:
-        logger_sink(log_level lvl)
+        logger_sink_t(log_level lvl)
             : _lvl(lvl), _flush_on_lvl(md::log::log_level::warning)
         {
         }
@@ -122,14 +122,14 @@ namespace _internal{
 } // ns: md::_internal
 
 
-class logger
-    : public std::enable_shared_from_this<logger>,
-    public sinks::logger_sink
+class logger_t
+    : public std::enable_shared_from_this<logger_t>,
+    public sinks::logger_sink_t
 {
 private:
     
-    logger(const std::shared_ptr<const logger>& parent, md::string_view path)
-        : sinks::logger_sink(parent->_lvl),
+    logger_t(const std::shared_ptr<const logger_t>& parent, md::string_view path)
+        : sinks::logger_sink_t(parent->_lvl),
         _parent(parent),
         _path(path.data()),
         _log_err_stack(-1)
@@ -138,22 +138,22 @@ private:
     
 public:
 
-    logger(md::string_view path, log_level lvl = log_level::info)
-        : sinks::logger_sink(lvl), _parent(), _path(path.data())
+    logger_t(md::string_view path, log_level lvl = log_level::info)
+        : sinks::logger_sink_t(lvl), _parent(), _path(path.data())
     {
     }
 
-    logger(md::string_view path, md::log::sinks::sp_logger_sink snk,
+    logger_t(md::string_view path, md::log::sinks::logger_sink snk,
         log_level lvl = log_level::info)
-        : sinks::logger_sink(lvl), _parent(), _path(path.data()),
+        : sinks::logger_sink_t(lvl), _parent(), _path(path.data()),
         _sinks{snk}
     {
     }
     
     template<class IT>
-    logger(md::string_view path, IT _begin, IT _end,
+    logger_t(md::string_view path, IT _begin, IT _end,
         log_level lvl = log_level::info)
-        : sinks::logger_sink(lvl), _parent(), _path(path.data()),
+        : sinks::logger_sink_t(lvl), _parent(), _path(path.data()),
         _sinks(_begin, _end)
     {
     }
@@ -165,8 +165,8 @@ public:
         return _path;
     }
     
-    //sp_logger add_child(const std::string& path) const
-    sp_logger add_child(md::string_view path) const
+    //logger add_child(const std::string& path) const
+    logger add_child(md::string_view path) const
     {
         std::string np;
         if(_path[_path.size() -1] != '/' && path[0] != '/')
@@ -177,19 +177,19 @@ public:
             np = _path + path.to_string();
         
         auto p = this->shared_from_this();
-        return sp_logger(new logger(p, np.c_str()));
+        return logger(new logger_t(p, np.c_str()));
     }
     
-    void register_sink(md::log::sinks::sp_logger_sink sink)
+    void register_sink(md::log::sinks::logger_sink sink)
     {
         _sinks.emplace_back(sink);
     }
     
-    void replace_sink(md::log::sinks::sp_logger_sink sink)
+    void replace_sink(md::log::sinks::logger_sink sink)
     {
         _sinks.clear();
         if(_parent)
-            ((logger*)_parent.get())->replace_sink(sink);
+            ((logger_t*)_parent.get())->replace_sink(sink);
         else
             register_sink(sink);
     }
@@ -394,20 +394,20 @@ public:
     
 private:
     
-    std::shared_ptr<const logger>       _parent;
+    std::shared_ptr<const logger_t>       _parent;
     std::string                         _path;
-    std::vector<sinks::sp_logger_sink>  _sinks;
+    std::vector<sinks::logger_sink>  _sinks;
     int32_t                             _log_err_stack;
 
 };
 
 namespace sinks{
     class console_sink
-        : public logger_sink
+        : public logger_sink_t
     {
     public:
         console_sink(bool enable_color)
-            : logger_sink(log_level::info), color(enable_color)
+            : logger_sink_t(log_level::info), color(enable_color)
         {
         }
         
@@ -481,14 +481,14 @@ namespace sinks{
     };
     
     class rotating_file_sink
-        : public logger_sink
+        : public logger_sink_t
     {
     public:
         rotating_file_sink(
             event_base* ev_base,
             bfs::path base_filename,
             size_t max_size, size_t backlog_size)
-            : logger_sink(log_level::info),
+            : logger_sink_t(log_level::info),
             _ev_base(ev_base),
             _ifd(-1), _wfd(-1), _fd(-1), _wev(nullptr),
             _base_filename(base_filename),
@@ -752,13 +752,13 @@ namespace _internal{
 
 } // ns: md::_internal
 
-inline md::log::sp_logger& default_logger()
+inline md::log::logger& default_logger()
 {
     static auto out_snk = std::make_shared<md::log::sinks::console_sink>(
         true
     );
-    static md::log::sp_logger _default_logger =
-        std::make_shared<md::log::logger>("/", out_snk);
+    static md::log::logger _default_logger =
+        std::make_shared<md::log::logger_t>("/", out_snk);
     return _default_logger;
 }
 

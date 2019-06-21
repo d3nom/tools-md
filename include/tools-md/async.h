@@ -92,7 +92,7 @@ public:
             v.emplace_back(*it);
             ++it;
         }
-        each(md::event_queue::get_default(), v, cb, end_cb);
+        each(md::event_queue_t::get_default(), v, cb, end_cb);
     }
     
     template<
@@ -108,7 +108,7 @@ public:
         , int32_t>::type = -1
     >
     static void each(
-        std::shared_ptr<event_queue> eq,
+        std::shared_ptr<event_queue_t> eq,
         Iterator first, Iterator last,
         T cb,
         md::callback::async_cb end_cb)
@@ -124,7 +124,7 @@ public:
         typename T = typename std::iterator_traits<Iterator>::value_type
     >
     static void each(
-        std::shared_ptr<event_queue> eq,
+        std::shared_ptr<event_queue_t> eq,
         Iterator first, Iterator last,
         md::callback::async_item_cb<T> cb,
         md::callback::async_cb end_cb)
@@ -145,13 +145,13 @@ public:
         md::callback::async_item_cb<T> cb,
         md::callback::async_cb end_cb)
     {
-        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
         each<T>(eq, v, cb, end_cb);
     }
     
     template<typename T>
     static void each(
-        std::shared_ptr<event_queue> eq,
+        std::shared_ptr<event_queue_t> eq,
         std::vector<T> v,
         md::callback::async_item_cb<T> cb,
         md::callback::async_cb end_cb)
@@ -192,13 +192,12 @@ public:
         strand->activate();
     }
     
-
-
+    
     static void series(
         std::vector< md::callback::async_series_cb > cbs,
         md::callback::async_cb end_cb)
     {
-        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
         series(eq, cbs, end_cb);
     }
     /*!
@@ -218,7 +217,7 @@ public:
      *      });
      */
     static void series(
-        std::shared_ptr<event_queue> eq,
+        std::shared_ptr<event_queue_t> eq,
         std::vector< md::callback::async_series_cb > cbs,
         md::callback::async_cb end_cb)
     {
@@ -269,13 +268,13 @@ public:
         std::vector< md::callback::async_waterfall_cb<T> > cbs,
         md::callback::value_cb<T> end_cb)
     {
-        std::shared_ptr<event_queue> eq = md::event_queue::get_default();
+        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
         waterfall<T>(eq, cbs, end_cb);
     }
     
     template<typename T>
     static void waterfall(
-        std::shared_ptr<event_queue> eq,
+        std::shared_ptr<event_queue_t> eq,
         std::vector< md::callback::async_waterfall_cb<T> > cbs,
         md::callback::value_cb<T> end_cb)
     {
@@ -335,7 +334,7 @@ template<
     typename Iterator,
     typename T
 >
-void event_queue::each(
+void event_queue_t::each(
     Iterator first, Iterator last,
     T cb,
     md::callback::async_cb end_cb)

@@ -34,7 +34,8 @@ inline uint64_t get_event_task_id()
     return ++_next_task_id;
 }
 
-inline void event_task_base::switch_owner(event_queue* new_owner, bool requeue)
+inline void event_task_base_t::switch_owner(
+    event_queue_t* new_owner, bool requeue)
 {
     if(!_owner || !new_owner)
         throw MD_ERR("Owner can't be NULL");
@@ -45,7 +46,7 @@ inline void event_task_base::switch_owner(event_queue* new_owner, bool requeue)
         _owner = new_owner;
 }
 
-inline void event_queue::series(
+inline void event_queue_t::series(
     std::vector< md::callback::async_series_cb > cbs,
     md::callback::async_cb end_cb)
 {
@@ -54,7 +55,7 @@ inline void event_queue::series(
 
 
 inline uint64_t _event_queue_push_back(
-    event_queue* eq, sp_event_task tp_task)
+    event_queue_t* eq, event_task tp_task)
 {
     if(tp_task->activate_on_requeue())
         eq->activate();
@@ -72,7 +73,7 @@ inline uint64_t _event_queue_push_back(
     auto it = std::find_if(
         eq->_tasks.begin(),
         eq->_tasks.end(),
-        [task_id=tp_task->id()](const sp_event_task& t)-> bool {
+        [task_id=tp_task->id()](const event_task& t)-> bool {
             return t->id() == task_id;
         }
     );
@@ -84,7 +85,7 @@ inline uint64_t _event_queue_push_back(
 }
 
 inline uint64_t _event_queue_push_front(
-    event_queue* eq, sp_event_task tp_task)
+    event_queue_t* eq, event_task tp_task)
 {
     if(tp_task->activate_on_requeue())
         eq->activate();
@@ -102,7 +103,7 @@ inline uint64_t _event_queue_push_front(
     auto it = std::find_if(
         eq->_tasks.begin(),
         eq->_tasks.end(),
-        [task_id=tp_task->id()](const sp_event_task& t)-> bool {
+        [task_id=tp_task->id()](const event_task& t)-> bool {
             return t->id() == task_id;
         }
     );

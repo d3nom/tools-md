@@ -35,21 +35,21 @@ SOFTWARE.
 
 namespace md{
 
-#define MD_TO_TASKBASE(x) std::static_pointer_cast<md::event_task_base>(x)
+#define MD_TO_TASKBASE(x) std::static_pointer_cast<md::event_task_base_t>(x)
 
-class event_task_base;
-class event_task;
+class event_task_base_t;
+class event_task_t;
 template<typename T>
-class event_strand;
-class event_queue;
+class event_strand_t;
+class event_queue_t;
 
-typedef std::shared_ptr< md::event_queue > sp_event_queue;
-typedef std::shared_ptr< md::event_task_base > sp_event_task;
+typedef std::shared_ptr< md::event_queue_t > event_queue;
+typedef std::shared_ptr< md::event_task_base_t > event_task;
 
 
-//typedef std::shared_ptr< md::event_strand > sp_event_strand;
+//typedef std::shared_ptr< md::event_strand_t > event_strand;
 template<typename T = int>
-using sp_event_strand = std::shared_ptr< md::event_strand<T> >;
+using event_strand = std::shared_ptr< md::event_strand_t<T> >;
 
 
 //typedef md::delegate< void() > event_task_fn;
@@ -60,11 +60,11 @@ uint64_t get_event_task_id();
 template<typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type = -1
 >
-uint64_t _event_queue_push_back(event_queue* eq, Task task);
+uint64_t _event_queue_push_back(event_queue_t* eq, Task task);
 template< typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type = -1
 >
-uint64_t _event_queue_push_front(event_queue* eq, Task task);
+uint64_t _event_queue_push_front(event_queue_t* eq, Task task);
 
 enum class event_requeue_pos
 {
@@ -73,48 +73,48 @@ enum class event_requeue_pos
     front = 2,
 };
 
-class event_task_base
+class event_task_base_t
 {
     template<typename T>
-    friend class event_strand;
-    friend class event_queue;
+    friend class event_strand_t;
+    friend class event_queue_t;
     
 public:
-    event_task_base(event_queue* owner)
+    event_task_base_t(event_queue_t* owner)
         : _owner(owner), _id(md::get_event_task_id())
     {
         if(!owner)
             throw MD_ERR("Owner can't be NULL");
     }
-    virtual ~event_task_base(){}
+    virtual ~event_task_base_t(){}
     
-    event_queue* owner(){ return _owner;}
+    event_queue_t* owner(){ return _owner;}
     uint64_t id() const { return _id;}
     
     virtual bool activate_on_requeue() const { return true;}
     
     virtual bool force_push() const { return false;}
-    virtual void switch_owner(event_queue* new_owner, bool requeue = false);
+    virtual void switch_owner(event_queue_t* new_owner, bool requeue = false);
     
     virtual void run_task() = 0;
     virtual event_requeue_pos requeue() const = 0;
     virtual size_t size() const = 0;
     
 protected:
-    event_queue* _owner;
+    event_queue_t* _owner;
     uint64_t _id;
 };
 
-class event_task
-    : public event_task_base
+class event_task_t
+    : public event_task_base_t
 {
 public:
-    event_task(event_queue* owner, event_task_fn t)
-        : event_task_base(owner), task(t)
+    event_task_t(event_queue_t* owner, event_task_fn t)
+        : event_task_base_t(owner), task(t)
     {
     }
     
-    virtual ~event_task(){}
+    virtual ~event_task_t(){}
     
     virtual void run_task(){ task();}
     virtual event_requeue_pos requeue() const { return event_requeue_pos::none;}
@@ -131,52 +131,52 @@ private:
 #endif
 
 
-class event_queue
-    : public std::enable_shared_from_this<event_queue>
+class event_queue_t
+    : public std::enable_shared_from_this<event_queue_t>
 {
-    friend class event_task_base;
+    friend class event_task_base_t;
     template<typename T>
-    friend class event_strand;
+    friend class event_strand_t;
 
     template<typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type
     >
-    friend uint64_t _event_queue_push_back(event_queue* eq, Task task);
-    friend uint64_t _event_queue_push_back(event_queue* eq, sp_event_task task);
+    friend uint64_t _event_queue_push_back(event_queue_t* eq, Task task);
+    friend uint64_t _event_queue_push_back(event_queue_t* eq, event_task task);
 
     template<typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type
     >
-    friend uint64_t _event_queue_push_front(event_queue* eq, Task task);
+    friend uint64_t _event_queue_push_front(event_queue_t* eq, Task task);
     friend uint64_t _event_queue_push_front(
-        event_queue* eq, sp_event_task task);
+        event_queue_t* eq, event_task task);
     
 protected:
-    //// initialize the default event_queue
-    //event_queue* event_queue::_default = new event_queue();
-    static std::shared_ptr<event_queue>& _default()
+    //// initialize the default event_queue_t
+    //event_queue_t* event_queue_t::_default = new event_queue_t();
+    static std::shared_ptr<event_queue_t>& _default()
     {
-        static std::shared_ptr<event_queue> _def;
+        static std::shared_ptr<event_queue_t> _def;
         return _def;
     }
     
 public:
-    static std::shared_ptr<event_queue> get_default()
+    static std::shared_ptr<event_queue_t> get_default()
     {
         if(!_default())
-            _default() = std::make_shared<event_queue>();
+            _default() = std::make_shared<event_queue_t>();
         return _default();
     }
     static void reset(event_base* ev_base)
     {
-        _default() = std::make_shared<event_queue>(ev_base);
+        _default() = std::make_shared<event_queue_t>(ev_base);
     }
     static void destroy_default()
     {
         _default().reset();
     }
     
-    event_queue(event_base* ev_base = nullptr)
+    event_queue_t(event_base* ev_base = nullptr)
         : _ev_base(ev_base), _ev(nullptr)
     {
         if(!_ev_base)
@@ -186,7 +186,7 @@ public:
             _ev_base, -1,
             EV_READ | EV_PERSIST,
             [](int fd, short events, void* arg){
-                event_queue* eq = (event_queue*)arg;
+                event_queue_t* eq = (event_queue_t*)arg;
                 eq->run_n(eq->_tasks.size());
             },
             this
@@ -194,7 +194,7 @@ public:
     }
     
     /// @brief Destructor.
-    virtual ~event_queue()
+    virtual ~event_queue_t()
     {
         if(_ev)
             event_free(_ev);
@@ -243,9 +243,9 @@ public:
     }
     
     template<typename T = int>
-    sp_event_strand<T> new_strand(bool auto_requeue = true)
+    event_strand<T> new_strand(bool auto_requeue = true)
     {
-        return std::make_shared<event_strand<T>>(this, auto_requeue);
+        return std::make_shared<event_strand_t<T>>(this, auto_requeue);
     }
     
     template< typename Task >
@@ -273,7 +273,7 @@ public:
         _tasks.erase(
             std::remove_if(
                 _tasks.begin(), _tasks.end(),
-                [task_id](const sp_event_task& t)-> bool {
+                [task_id](const event_task& t)-> bool {
                     return t->id() == task_id;
                 }
             )
@@ -321,7 +321,7 @@ public:
             return;
         
         if(count <= 1){
-            sp_event_task t = _tasks.front();
+            event_task t = _tasks.front();
             _tasks.pop_front();
             lock.unlock();
             run_event_task(t);
@@ -330,7 +330,7 @@ public:
         
         if(count > _tasks.size())
             count = _tasks.size();
-        std::deque< sp_event_task > tmp_tasks(count);
+        std::deque< event_task > tmp_tasks(count);
         std::move(
             _tasks.begin(), _tasks.begin() + count,
             std::back_inserter(tmp_tasks)
@@ -346,7 +346,7 @@ public:
             return;
         
         if(count <= 1){
-            sp_event_task t = _tasks.front();
+            event_task t = _tasks.front();
             _tasks.pop_front();
             run_event_task(t);
             return;
@@ -354,7 +354,7 @@ public:
         
         if(count > _tasks.size())
             count = _tasks.size();
-        std::deque< sp_event_task > tmp_tasks(count);
+        std::deque< event_task > tmp_tasks(count);
         std::move(
             _tasks.begin(), _tasks.begin() + count,
             std::back_inserter(tmp_tasks)
@@ -370,7 +370,7 @@ public:
         do{
     #ifdef MD_THREAD_SAFE
             std::unique_lock<std::mutex> lock(_mutex);
-            std::deque< sp_event_task > tmp_tasks = std::move(_tasks);
+            std::deque< event_task > tmp_tasks = std::move(_tasks);
             lock.unlock();
             for(size_t i = 0; i < tmp_tasks.size(); ++i)
                 run_event_task(tmp_tasks[i]);
@@ -381,7 +381,7 @@ public:
             }
             lock.unlock();
     #else
-            std::deque< sp_event_task > tmp_tasks = std::move(_tasks);
+            std::deque< event_task > tmp_tasks = std::move(_tasks);
             for(size_t i = 0; i < tmp_tasks.size(); ++i)
                 run_event_task(tmp_tasks[i]);
             if(_tasks.size() == 0)
@@ -395,7 +395,7 @@ public:
     }
 
 private:
-    void requeue_task(event_queue* new_owner, event_task_base* task)
+    void requeue_task(event_queue_t* new_owner, event_task_base_t* task)
     {
         MD_LOCK_EVENT_QUEUE;
         
@@ -403,7 +403,7 @@ private:
             std::remove_if(
                 _tasks.begin(), _tasks.end(),
                 [new_owner, task_id=task->id()]
-                (const sp_event_task& t)-> bool {
+                (const event_task& t)-> bool {
                     if(t->id() == task_id){
                         new_owner->push_back(t);
                         return true;
@@ -416,7 +416,7 @@ private:
         new_owner->activate();
     }
     
-    void run_event_task(sp_event_task& t)
+    void run_event_task(event_task& t)
     {
         if(!t)
             return;
@@ -441,7 +441,7 @@ private:
     #ifdef MD_THREAD_SAFE
     mutable std::mutex _mutex;
     #endif
-    std::deque< sp_event_task > _tasks;
+    std::deque< event_task > _tasks;
     
     event_base* _ev_base;
     event* _ev;
@@ -451,10 +451,10 @@ private:
 template<typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type
 >
-uint64_t _event_queue_push_back(event_queue* eq, Task task)
+uint64_t _event_queue_push_back(event_queue_t* eq, Task task)
 {
     eq->activate();
-    sp_event_task t(new event_task(eq, md::event_task_fn(task)));
+    event_task t(new event_task(eq, md::event_task_fn(task)));
     eq->_tasks.emplace_back(t);
     return t->id();
 }
@@ -462,16 +462,16 @@ uint64_t _event_queue_push_back(event_queue* eq, Task task)
 template<typename Task,
     typename std::enable_if<std::is_invocable<Task>::value, int32_t>::type
 >
-uint64_t _event_queue_push_front(event_queue* eq, Task task)
+uint64_t _event_queue_push_front(event_queue_t* eq, Task task)
 {
     eq->activate();
-    sp_event_task t(new event_task(eq, md::event_task_fn( task )));
+    event_task t(new event_task(eq, md::event_task_fn( task )));
     eq->_tasks.emplace_front(t);
     return t->id();
 }
 
-uint64_t _event_queue_push_back(event_queue* eq, sp_event_task tp_task);
-uint64_t _event_queue_push_front(event_queue* eq, sp_event_task tp_task);
+uint64_t _event_queue_push_back(event_queue_t* eq, event_task tp_task);
+uint64_t _event_queue_push_front(event_queue_t* eq, event_task tp_task);
 
 
 } //::md
