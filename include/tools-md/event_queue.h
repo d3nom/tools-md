@@ -454,7 +454,7 @@ template<typename Task,
 uint64_t _event_queue_push_back(event_queue_t* eq, Task task)
 {
     eq->activate();
-    event_task t(new event_task(eq, md::event_task_fn(task)));
+    event_task t(new event_task_t(eq, md::event_task_fn(task)));
     eq->_tasks.emplace_back(t);
     return t->id();
 }
@@ -465,7 +465,7 @@ template<typename Task,
 uint64_t _event_queue_push_front(event_queue_t* eq, Task task)
 {
     eq->activate();
-    event_task t(new event_task(eq, md::event_task_fn( task )));
+    event_task t(new event_task_t(eq, md::event_task_fn( task )));
     eq->_tasks.emplace_front(t);
     return t->id();
 }
