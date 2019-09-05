@@ -309,5 +309,107 @@ inline void gzip_file(
     
     
     
-}}//::md
+}}//::md::file
+namespace md {
+
+inline std::string gzip(
+    const std::string& inf_data)
+{
+    z_stream zs;
+    memset(&zs, 0, sizeof(zs));
+    if(deflateInit2(
+        &zs,
+        Z_DEFAULT_COMPRESSION,
+        Z_DEFLATED,
+        MD_ZLIB_GZIP_WSIZE,
+        MD_ZLIB_MEM_LEVEL,
+        MD_ZLIB_STRATEGY
+        ) != Z_OK
+    ){
+        throw MD_ERR(
+            "deflateInit2 failed!"
+        );
+    }
+    
+    std::string def_data;
+    zs.next_in = (Bytef*)inf_data.data();
+    zs.avail_in = inf_data.size();
+    int ret;
+    char outbuffer[32768];
+    
+    do{
+        zs.next_out =
+            reinterpret_cast<Bytef*>(outbuffer);
+        zs.avail_out = sizeof(outbuffer);
+        ret = deflate(&zs, Z_FINISH);
+        if (def_data.size() < zs.total_out) {
+            // append the block to the output string
+            def_data.append(
+                outbuffer,
+                zs.total_out - def_data.size()
+            );
+        }
+    }while(ret == Z_OK);
+    
+    deflateEnd(&zs);
+    if(ret != Z_STREAM_END){
+        throw MD_ERR(
+            "Error while compression: ({}) {}",
+            ret, zs.msg
+        );
+    }
+    
+    return def_data;
+}
+
+inline std::string ungzip(
+    const std::string& def_data)
+{
+    z_stream zs;
+    memset(&zs, 0, sizeof(zs));
+    if(inflateInit2(
+        &zs,
+        MD_ZLIB_GZIP_WSIZE
+        ) != Z_OK
+    ){
+        throw MD_ERR(
+            "inflateInit2 failed!"
+        );
+    }
+    
+    std::string inf_data;
+    zs.next_in = (Bytef*)def_data.data();
+    zs.avail_in = def_data.size();
+    int ret;
+    char outbuffer[32768];
+    
+    do{
+        zs.next_out =
+            reinterpret_cast<Bytef*>(outbuffer);
+        zs.avail_out = sizeof(outbuffer);
+        ret = inflate(&zs, Z_FINISH);
+        if (inf_data.size() < zs.total_out) {
+            // append the block to the output string
+            inf_data.append(
+                outbuffer,
+                zs.total_out - inf_data.size()
+            );
+        }
+    }while(ret == Z_OK);
+    
+    inflateEnd(&zs);
+    if(ret != Z_STREAM_END){
+        throw MD_ERR(
+            "Error while decompression: ({}) {}",
+            ret, zs.msg ? zs.msg : "No error description!"
+        );
+    }
+    
+    return inf_data;
+}
+
+
+
+}//::md
+
 #endif //_tools_md_files_h
