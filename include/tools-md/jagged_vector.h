@@ -487,7 +487,7 @@ public:
     std::vector<T> to_vector(size_t index) const
     {
         std::vector<T> r;
-        for(auto it = pgv.cbegin(index); it != pgv.cend(index); ++it)
+        for(auto it = this->cbegin(index); it != this->cend(index); ++it)
             r.emplace_back(*it);
         return r;
     }
