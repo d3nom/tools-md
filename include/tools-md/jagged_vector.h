@@ -484,6 +484,14 @@ public:
     //      
     // }
     
+    std::vector<T> to_vector(size_t index) const
+    {
+        std::vector<T> r;
+        for(auto it = pgv.cbegin(index); it != pgv.cend(index); ++it)
+            r.emplace_back(*it);
+        return r;
+    }
+    
     static const size_t npos = static_cast<size_t>(-1);
 private:
     std::vector<dim_bounds> _vec_dim;
