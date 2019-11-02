@@ -254,14 +254,15 @@ public:
                     strand->activate();
                 });
             });
-        }
+        }        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
+        series(eq, cbs, end_cb);
+
         strand->push_back([strand, end_cb]() -> void {
             end_cb(strand->data());
         });
         strand->requeue_self_back();
         strand->activate();
     }
-    
     
     template<typename T>
     static void waterfall(
@@ -323,6 +324,140 @@ public:
         }
         strand->push_back([strand, end_cb]() -> void {
             end_cb(strand->data()->err, strand->data()->data);
+        });
+        strand->requeue_self_back();
+        strand->activate();
+    }
+    
+    static void loop(
+        md::callback::continue_cb cont_cb,
+        md::callback::async_series_cb cb,
+        md::callback::async_cb end_cb)
+    {
+        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
+        loop(eq, cont_cb, cb, end_cb);
+    }
+    
+    static void loop(
+        std::shared_ptr<event_queue_t> eq,
+        md::callback::continue_cb cont_cb,
+        md::callback::async_series_cb cb,
+        md::callback::async_cb end_cb)
+    {
+        auto strand = eq->new_strand<md::callback::cb_error>(false);
+        if(!cont_cb)
+            cont_cb = []()->bool{ return true;}
+        if(!end_cb)
+            end_cb = [](const md::callback::cb_error&){}
+        _call_loop(strand, cont_cb, cb, end_cb);
+    }
+    
+    static void loop(
+        md::callback::async_series_cb cb,
+        md::callback::continue_cb cont_cb,
+        md::callback::async_cb end_cb)
+    {
+        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
+        loop(eq, cb, cont_cb, end_cb);
+    }
+    
+    static void loop(
+        std::shared_ptr<event_queue_t> eq,
+        md::callback::async_series_cb cb,
+        md::callback::continue_cb cont_cb,
+        md::callback::async_cb end_cb)
+    {
+        auto strand = eq->new_strand<md::callback::cb_error>(false);
+        if(!cont_cb)
+            cont_cb = []()->bool{ return true;}
+        if(!end_cb)
+            end_cb = [](const md::callback::cb_error&){}
+        _call_loop(strand, cb, cont_cb, end_cb);
+    }
+    
+private:
+    static void _call_loop(
+        md::event_strand<md::callback::cb_error> strand,
+        md::callback::continue_cb cont_cb,
+        md::callback::async_series_cb cb,
+        md::callback::async_cb end_cb)
+    {
+        strand->push_back(
+        [strand, cont_cb, cb, end_cb](){
+            if(!cont_cb()){
+                strand->push_back([strand, end_cb]() -> void {
+                    end_cb(nullptr);
+                });
+                strand->requeue_self_last_front();
+                strand->activate();
+                return;
+            }
+            
+            auto cb_called = std::make_shared<bool>(false);
+            cb((md::callback::async_cb)[strand, cb_called]
+            (const md::callback::cb_error& err) -> void {
+                if(*cb_called)
+                    md::log::default_logger()->fatal(MD_ERR(
+                        "Callback already called once!"
+                    ));
+                *cb_called = true;
+                if(err){
+                    strand->push_back([strand, end_cb]() -> void {
+                        end_cb(strand->data());
+                    });
+                    
+                    strand->data(err);
+                    strand->requeue_self_last_front();
+                    strand->activate();
+                    return;
+                }
+                
+                _call_loop(strand, cont_cb, cb, end_cb);
+            });
+        });
+        strand->requeue_self_back();
+        strand->activate();
+    }
+    
+    static void _call_loop(
+        md::event_strand<md::callback::cb_error> strand,
+        md::callback::async_series_cb cb,
+        md::callback::continue_cb cont_cb,
+        md::callback::async_cb end_cb)
+    {
+        strand->push_back(
+        [strand, cont_cb, cb, end_cb](){
+            auto cb_called = std::make_shared<bool>(false);
+            cb((md::callback::async_cb)[strand, cb_called]
+            (const md::callback::cb_error& err) -> void {
+                if(*cb_called)
+                    md::log::default_logger()->fatal(MD_ERR(
+                        "Callback already called once!"
+                    ));
+                *cb_called = true;
+                
+                if(err){
+                    strand->push_back([strand, end_cb]() -> void {
+                        end_cb(strand->data());
+                    });
+                    
+                    strand->data(err);
+                    strand->requeue_self_last_front();
+                    strand->activate();
+                    return;
+                }
+                
+                if(!cont_cb()){
+                    strand->push_back([strand, end_cb]() -> void {
+                        end_cb(nullptr);
+                    });
+                    strand->requeue_self_last_front();
+                    strand->activate();
+                    return;
+                }
+                
+                _call_loop(strand, cb, cont_cb, end_cb);
+            });
         });
         strand->requeue_self_back();
         strand->activate();

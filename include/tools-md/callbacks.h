@@ -52,6 +52,7 @@ using async_waterfall_cb =
 template<typename T>
 using async_value_cb = typename std::function<void(const T& val, value_cb<T>)>;
 
+typedef std::function<bool()> continue_cb;
 
 inline void noop_cb(const cb_error& err)
 {
