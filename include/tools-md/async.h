@@ -254,9 +254,8 @@ public:
                     strand->activate();
                 });
             });
-        }        std::shared_ptr<event_queue_t> eq = md::event_queue_t::get_default();
-        series(eq, cbs, end_cb);
-
+        }
+        
         strand->push_back([strand, end_cb]() -> void {
             end_cb(strand->data());
         });
@@ -346,9 +345,9 @@ public:
     {
         auto strand = eq->new_strand<md::callback::cb_error>(false);
         if(!cont_cb)
-            cont_cb = []()->bool{ return true;}
+            cont_cb = []()->bool{ return true;};
         if(!end_cb)
-            end_cb = [](const md::callback::cb_error&){}
+            end_cb = [](const md::callback::cb_error&){};
         _call_loop(strand, cont_cb, cb, end_cb);
     }
     
@@ -369,9 +368,9 @@ public:
     {
         auto strand = eq->new_strand<md::callback::cb_error>(false);
         if(!cont_cb)
-            cont_cb = []()->bool{ return true;}
+            cont_cb = []()->bool{ return true;};
         if(!end_cb)
-            end_cb = [](const md::callback::cb_error&){}
+            end_cb = [](const md::callback::cb_error&){};
         _call_loop(strand, cb, cont_cb, end_cb);
     }
     
@@ -394,7 +393,8 @@ private:
             }
             
             auto cb_called = std::make_shared<bool>(false);
-            cb((md::callback::async_cb)[strand, cb_called]
+            cb((md::callback::async_cb)
+            [strand, cont_cb, cb, end_cb, cb_called]
             (const md::callback::cb_error& err) -> void {
                 if(*cb_called)
                     md::log::default_logger()->fatal(MD_ERR(
@@ -428,7 +428,8 @@ private:
         strand->push_back(
         [strand, cont_cb, cb, end_cb](){
             auto cb_called = std::make_shared<bool>(false);
-            cb((md::callback::async_cb)[strand, cb_called]
+            cb((md::callback::async_cb)
+            [strand, cont_cb, cb, end_cb, cb_called]
             (const md::callback::cb_error& err) -> void {
                 if(*cb_called)
                     md::log::default_logger()->fatal(MD_ERR(
